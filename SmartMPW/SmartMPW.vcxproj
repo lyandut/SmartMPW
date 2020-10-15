@@ -104,7 +104,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -140,7 +140,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -151,7 +151,46 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SmartMPW.cpp" />
+    <ClInclude Include="AdaptSelect.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="Config.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="Data.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="Instance.hpp" />
+    <ClInclude Include="MpwBinPack.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="Utils.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="Visualizer.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_1.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_10.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_2.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_3.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_4.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_5.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_6.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_7.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_8.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_9.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
