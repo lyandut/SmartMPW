@@ -4,6 +4,15 @@
 //
 #pragma once
 
+#ifdef _DEBUG
+/// debug_assert is an assert that also requires debug mode to be defined.
+#define debug_assert(x) assert(x)
+#define debug_run(x) x
+#else
+#define debug_assert(x)
+#define debug_run(x)
+#endif
+
 #include <vector>
 #include <memory>
 #include <cassert>
@@ -65,35 +74,46 @@ template<typename T>
 struct Polygon {
 	const int id;
 	const std::shared_ptr<std::vector<Point<T>>> in_points; // 原始坐标序列
-	vis::bg_ring_t ring;
 	T area;
+	T max_length;
+	Point<T> lb_point;   // 参考坐标（求解）
+	Rotation rotation;   // 旋转角度（求解）
+	vis::bg_ring_t ring; // 放置结果（求解）
 
-	Point<T> lb_point; // 参考坐标（求解）
-	Rotation rotation; // 旋转角度（求解）
-
-	Polygon(int id_, const std::vector<Point<T>> &points)
+	Polygon(int id_, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
 		: id(id_), rotation(Rotation::_0_), in_points(std::make_shared<std::vector<Point<T>>>(points)) {
 		for (const auto &point : points) { vis::bg::append(ring, vis::bg_point_t(point.x, point.y)); }
 		area = abs(vis::bg::area(ring));
+		max_length = max_element(segments.begin(), segments.end(), [](auto &lhs, auto &rhs) { return lhs.len < rhs.len; })->len;
 	}
 
 	virtual Shape shape() = 0;
+	virtual void to_ring() = 0; // 根据lb_point和rotation确定ring
 };
 
 template<typename T>
 struct Rect : public Polygon<T> {
 	T width, height;
-	enum { Single, Combination } type;
-	std::vector<int> comb_ids;
-
-	Shape shape() { return Shape::R; }
 
 	Rect(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
-		: Polygon<T>(id, points), type(Single) {
+		: Polygon<T>(id, points, segments) {
 		assert(segments.size() == 4);
 		width = segments[0].len;
 		height = segments[1].len;
 		assert(width == segments[2].len && height == segments[3].len);
+	}
+
+	Shape shape() { return Shape::R; }
+
+	void to_ring() {
+		vis::bg::clear(this->ring);
+		coord_t w = width, h = height;
+		if (this->rotation == Rotation::_90_) { std::swap(w, h); }
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y + h));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + w, this->lb_point.y + h));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + w, this->lb_point.y));
+		assert(this->area == vis::bg::area(this->ring));
 	}
 };
 
@@ -102,10 +122,8 @@ struct LShape : public Polygon<T> {
 	T hd, hm, hu; // hd=hm+hu
 	T vl, vm, vr; // vl=vm+vr
 
-	Shape shape() { return Shape::L; }
-
 	LShape(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
-		: Polygon<T>(id, points) {
+		: Polygon<T>(id, points, segments) {
 		std::vector<size_t> up_segs; up_segs.reserve(2);
 		std::vector<size_t> down_segs; down_segs.reserve(2);
 		std::vector<size_t> left_segs; left_segs.reserve(2);
@@ -215,6 +233,50 @@ struct LShape : public Polygon<T> {
 
 		assert(hd == hu + hm && vl == vm + vr);
 	}
+
+	Shape shape() { return Shape::L; }
+
+	void to_ring() {
+		vis::bg::clear(this->ring);
+		switch (this->rotation) {
+		case Rotation::_0_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y + vl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hu, this->lb_point.y + vl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hu, this->lb_point.y + vr));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hd, this->lb_point.y + vr));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hd, this->lb_point.y));
+			break;
+		case Rotation::_90_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vl, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vl, this->lb_point.y - hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vr, this->lb_point.y - hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vr, this->lb_point.y - hd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y - hd));
+			break;
+		case Rotation::_180_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y - vl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hu, this->lb_point.y - vl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hu, this->lb_point.y - vr));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hd, this->lb_point.y - vr));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hd, this->lb_point.y));
+			break;
+		case Rotation::_270_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vl, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vl, this->lb_point.y + hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vr, this->lb_point.y + hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vr, this->lb_point.y + hd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y + hd));
+			break;
+		default:
+			assert(false);
+			break;
+		}
+		assert(this->area == vis::bg::area(this->ring));
+	}
 };
 
 template<typename T>
@@ -222,10 +284,8 @@ struct TShape : public Polygon<T> {
 	T hu, hl, hr, hd; // hu+hl+hr=hd
 	T vlu, vld, vru, vrd; // vlu+vld=vru+vrd
 
-	Shape shape() { return Shape::T; }
-
 	TShape(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
-		: Polygon<T>(id, points) {
+		: Polygon<T>(id, points, segments) {
 		std::vector<size_t> up_segs; up_segs.reserve(3);
 		std::vector<size_t> down_segs; down_segs.reserve(3);
 		std::vector<size_t> left_segs; left_segs.reserve(3);
@@ -350,6 +410,58 @@ struct TShape : public Polygon<T> {
 		else { assert(false); }
 
 		assert(hu + hl + hr == hd && vlu + vld == vru + vrd);
+	}
+
+	Shape shape() { return Shape::T; }
+
+	void to_ring() {
+		vis::bg::clear(this->ring);
+		switch (this->rotation) {
+		case Rotation::_0_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y + vld));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl, this->lb_point.y + vld));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl, this->lb_point.y + vld + vlu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl + hu, this->lb_point.y + vld + vlu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl + hu, this->lb_point.y + vrd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hd, this->lb_point.y + vrd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hd, this->lb_point.y));
+			break;
+		case Rotation::_90_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vld, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vld, this->lb_point.y - hl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vld + vlu, this->lb_point.y - hl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vld + vlu, this->lb_point.y - hl - hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vrd, this->lb_point.y - hl - hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + vrd, this->lb_point.y - hd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y - hd));
+			break;
+		case Rotation::_180_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y - vld));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hl, this->lb_point.y - vld));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hl, this->lb_point.y - vld - vlu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hl - hu, this->lb_point.y - vld - vlu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hl - hu, this->lb_point.y - vrd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hd, this->lb_point.y - vrd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - hd, this->lb_point.y));
+			break;
+		case Rotation::_270_:
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vld, this->lb_point.y));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vld, this->lb_point.y + hl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vld - vlu, this->lb_point.y + hl));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vld - vlu, this->lb_point.y + hl + hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vrd, this->lb_point.y + hl + hu));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x - vrd, this->lb_point.y + hd));
+			vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y + hd));
+			break;
+		default:
+			assert(false);
+			break;
+		}
+		assert(this->area == vis::bg::area(this->ring));
 	}
 };
 

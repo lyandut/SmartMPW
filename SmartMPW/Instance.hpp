@@ -15,11 +15,11 @@ public:
 	Environment(const string &ins_name) : _ins_name(ins_name) {}
 
 	string instance_path() const { return instance_dir() + _ins_name + ".txt"; }
-	string html_path() const { return solution_dir() + _ins_name + ".html"; }
-	string html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
 	string solution_path() const { return solution_dir() + _ins_name + ".txt"; }
 	string solution_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".txt"; }
-	string log_path() const { solution_dir() + "log.csv"; }
+	string html_path() const { return solution_dir() + _ins_name + ".html"; }
+	string html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
+	string log_path() const { return solution_dir() + "log.csv"; }
 
 private:
 	static string instance_dir() { return "Instance/"; }
@@ -33,13 +33,13 @@ class Instance {
 public:
 	Instance(const Environment &env) : _env(env) { read_instance(); }
 
-	int get_total_area() const { return _total_area; }
+	coord_t get_total_area() const { return _total_area; }
 
-	int get_polygon_num() const { return _polygon_num; }
+	size_t get_polygon_num() const { return _polygon_num; }
 
 	const auto& get_polygon_ptrs()  const { return _polygon_ptrs; }
 
-	// [todo]
+	// [todo] 预处理，合并部分L/T成矩形
 	void pre_combine() {}
 
 private:
@@ -68,28 +68,25 @@ private:
 			case 4: {
 				//_polygon_ptrs.emplace_back(make_shared<rect_t>(_polygon_num++, in_points, in_segments));
 				//_rects.push_back(*dynamic_pointer_cast<rect_t>(_polygon_ptrs.back()));
-				rect_t rect(_polygon_num++, in_points, in_segments);
-				_total_area += rect.area;
-				_rects.push_back(move(rect));
+				_rects.emplace_back(_polygon_num++, in_points, in_segments);
 				_polygon_ptrs.emplace_back(make_shared<rect_t>(_rects.back()));
+				_total_area += _rects.back().area;
 				break;
 			}
 			case 6: {
 				//_polygon_ptrs.emplace_back(make_shared<lshape_t>(_polygon_num++, in_points, in_segments));
 				//_lshapes.push_back(*dynamic_pointer_cast<lshape_t>(_polygon_ptrs.back()));
-				lshape_t lshape(_polygon_num++, in_points, in_segments);
-				_total_area += lshape.area;
-				_lshapes.push_back(move(lshape));
+				_lshapes.emplace_back(_polygon_num++, in_points, in_segments);
 				_polygon_ptrs.emplace_back(make_shared<lshape_t>(_lshapes.back()));
+				_total_area += _lshapes.back().area;
 				break;
 			}
 			case 8: {
 				//_polygon_ptrs.emplace_back(make_shared<tshape_t>(_polygon_num++, in_points, in_segments));
 				//_tshapes.push_back(*dynamic_pointer_cast<tshape_t>(_polygon_ptrs.back()));
-				tshape_t tshape(_polygon_num++, in_points, in_segments);
-				_total_area += tshape.area;
-				_tshapes.push_back(move(tshape));
+				_tshapes.emplace_back(_polygon_num++, in_points, in_segments);
 				_polygon_ptrs.emplace_back(make_shared<tshape_t>(_tshapes.back()));
+				_total_area += _tshapes.back().area;
 				break;
 			}
 			default:
@@ -122,7 +119,7 @@ private:
 	list<lshape_t> _lshapes;
 	list<tshape_t> _tshapes;
 
-	int _polygon_num;
-	int _total_area;
+	size_t _polygon_num;
+	coord_t _total_area;
 };
 

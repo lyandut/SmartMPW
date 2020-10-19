@@ -39,7 +39,7 @@ namespace utils_visualize {
 	// 多边形（包括0个或者多个内环 inner rings，逆时针，起点=终点）
 	using bg_polygon_t = bg::model::polygon<bg_point_t, false, true>;
 
-	// 环（封闭曲线，逆时针，起点=终点）
+	// 环（封闭曲线，顺时针，起点≠终点）
 	using bg_ring_t = bg::model::ring<bg_point_t, true, false>;
 	//using bg_ring_t = bg_polygon_t::ring_type;
 
@@ -115,8 +115,8 @@ namespace utils_visualize_drawer {
 	};
 
 	struct Drawer {
-		static constexpr double W = 800;
-		static constexpr double H = 800;
+		static constexpr double W = 400;
+		static constexpr double H = 300;
 
 		Drawer(string path, double width, double height) : ofs(path), wx(W / width), hx(H / height) { begin(); }
 		~Drawer() { end(); }
@@ -126,7 +126,7 @@ namespace utils_visualize_drawer {
 				<< "<html>" << endl
 				<< "  <head>" << endl
 				<< "    <meta charset='utf-8'>" << endl
-				<< "    <title>2D Packing/Cutting Visualization</title>" << endl
+				<< "    <title>SmartMPW Visualization</title>" << endl
 				<< "  </head>" << endl
 				<< "  <body>" << endl // style='text-align:center;'
 				<< "    <svg width='" << W << "' height='" << H << "' viewBox='-50 -50 " << W + 100 << " " << H + 100 << "'>" << endl;
@@ -164,8 +164,17 @@ namespace utils_visualize_drawer {
 
 		void circle(double x, double y, double r = 2) {
 			x *= wx; y *= hx;
-			ofs << "      <circle cx='" << x << "' cy='" << y << "' r='" << r << "' style='fill-opacity:0; stroke:#000000; stroke-width:2'/>" << std::endl;
+			ofs << "      <circle cx='" << x << "' cy='" << y << "' r='" << r << "' style='fill-opacity:0; stroke:#000000; stroke-width:2'/>" << endl << endl;
 		}
+
+		void polygon(const string &polygon_str, const string &label, const string &fcolor, const string &bcolor) {
+			ofs << "      <polygon points='" << polygon_str << "' style='fill:#" << bcolor << "; stroke:black; stroke-width:1'/>" << endl << endl;
+		}
+		void polygon(const string &polygon_str, const string &label = "") {
+			rc.next();
+			polygon(polygon_str, label, rc.fcolor, rc.bcolor);
+		}
+
 
 		double wx;
 		double hx;
