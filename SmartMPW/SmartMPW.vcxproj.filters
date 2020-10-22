@@ -18,23 +18,23 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AdaptSelect.hpp">
+      <Filter>Algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="MpwBinPack.hpp">
+      <Filter>Algorithm</Filter>
+    </ClInclude>
     <ClInclude Include="Data.hpp">
       <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="Instance.hpp">
       <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.hpp">
+    <ClInclude Include="Config.hpp">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="MpwBinPack.hpp">
-      <Filter>Algorithm</Filter>
-    </ClInclude>
-    <ClInclude Include="AdaptSelect.hpp">
-      <Filter>Algorithm</Filter>
-    </ClInclude>
-    <ClInclude Include="Config.hpp">
-      <Filter>Data</Filter>
+    <ClInclude Include="Utils.hpp">
+      <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Visualizer.hpp">
       <Filter>Utils</Filter>

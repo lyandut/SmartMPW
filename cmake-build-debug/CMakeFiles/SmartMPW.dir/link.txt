@@ -1,0 +1,3 @@
+"E:\Program Files\JetBrains\Toolbox\apps\CLion\ch-0\202.7660.37\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\SmartMPW.dir/objects.a
+E:\ProgramData\mingw-w64\x86_64-8.1.0-release-posix-seh-rt_v6-rev0\mingw64\bin\ar.exe cr CMakeFiles\SmartMPW.dir/objects.a @CMakeFiles\SmartMPW.dir\objects1.rsp
+E:\ProgramData\mingw-w64\x86_64-8.1.0-release-posix-seh-rt_v6-rev0\mingw64\bin\g++.exe -g   -Wl,--whole-archive CMakeFiles\SmartMPW.dir/objects.a -Wl,--no-whole-archive  -o SmartMPW.exe -Wl,--out-implib,libSmartMPW.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\SmartMPW.dir\linklibs.rsp
