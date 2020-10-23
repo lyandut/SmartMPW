@@ -24,7 +24,7 @@ add_executable(SmartMPW
 
 set(BOOST_ROOT $ENV{BOOST_ROOT})
 
-find_package(Boost COMPONENTS geometry REQUIRED)
+find_package(Boost REQUIRED)
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
