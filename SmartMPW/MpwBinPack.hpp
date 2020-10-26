@@ -116,17 +116,19 @@ namespace mbp {
 		};
 
 		void init_sort_rules() {
-			vector<size_t> seq(_src.size());
-
 			// 0_输入顺序
+			vector<size_t> seq(_src.size());
 			iota(seq.begin(), seq.end(), 0);
-			for (size_t i = 0; i < 3; ++i) { _sort_rules.push_back({ seq, numeric_limits<coord_t>::max() }); }
+			_sort_rules.reserve(4);
+			for (size_t i = 0; i < 4; ++i) { _sort_rules.push_back({ seq, numeric_limits<coord_t>::max() }); }
 			// 1_面积递减
 			sort(_sort_rules[1].sequence.begin(), _sort_rules[1].sequence.end(), [this](size_t lhs, size_t rhs) {
 				return _src.at(lhs)->area > _src.at(rhs)->area; });
-			// 2_随机排序
-			shuffle(_sort_rules[2].sequence.begin(), _sort_rules[2].sequence.end(), _gen);
-			// [todo] 最长边递减
+			// 2_最长边递减
+			sort(_sort_rules[2].sequence.begin(), _sort_rules[2].sequence.end(), [this](size_t lhs, size_t rhs) {
+				return _src.at(lhs)->max_length > _src.at(rhs)->max_length; });
+			// 3_随机排序
+			shuffle(_sort_rules[3].sequence.begin(), _sort_rules[3].sequence.end(), _gen);
 
 			// 默认输入顺序
 			_polygons.assign(_sort_rules[0].sequence.begin(), _sort_rules[0].sequence.end());

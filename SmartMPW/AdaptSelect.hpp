@@ -100,11 +100,18 @@ private:
 	/// 在区间[lb_width, ub_width]内，等距地生成候选宽度
 	vector<coord_t> cal_candidate_widths_on_interval(coord_t interval = 1) {
 		vector<coord_t> candidate_widths;
-		// [todo]
-		//coord_t min_width = min(_cfg.lb_width, min_element());
-		candidate_widths.reserve(_cfg.ub_width - _cfg.lb_width + 1);
-		for (coord_t cw = _cfg.lb_width; cw <= _cfg.ub_width; cw += interval) {
-			if (cw * _cfg.ub_height >= _ins.get_total_area()) { candidate_widths.push_back(cw); }
+		coord_t min_width = 0, max_width = 0;
+		for (auto &ptr : _ins.get_polygon_ptrs()) {
+			min_width = max(min_width, ptr->max_length);
+			max_width += ptr->max_length;
+		}
+		min_width = ceil(max(min_width, _cfg.lb_width));
+		max_width = ceil(min(max_width, _cfg.ub_width));
+
+		candidate_widths.reserve(max_width - min_width + 1);
+		for (coord_t cw = min_width; cw <= max_width; cw += interval) {
+			if (cw * _cfg.ub_height < _ins.get_total_area()) { continue; }
+			candidate_widths.push_back(cw);
 		}
 		return candidate_widths;
 	}
