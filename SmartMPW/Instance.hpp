@@ -12,10 +12,18 @@ using namespace std;
 
 class Environment {
 public:
-	Environment(const string &ins_name) : _ins_name(ins_name) {}
+	Environment(const string &ins_str) { utils::split_filename(ins_str, _submit_dir, _ins_name); }
 
-	string instance_path() const { return instance_dir() + _ins_name + ".txt"; }
-	string solution_path() const { return solution_dir() + _ins_name + ".txt"; }
+	const string& instance_name() const { return _ins_name; }
+	const string& submit_dir() const { return _submit_dir; }
+	string instance_path() const {
+		if (submit_dir().empty()) { return instance_dir() + _ins_name + ".txt"; }
+		return submit_dir() + _ins_name;
+	}
+	string solution_path() const {
+		if (submit_dir().empty()) { return solution_dir() + _ins_name + ".txt"; }
+		return submit_dir() + "result.txt";
+	}
 	string solution_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".txt"; }
 	string html_path() const { return solution_dir() + _ins_name + ".html"; }
 	string html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
@@ -25,8 +33,9 @@ private:
 	static string instance_dir() { return "Instance/"; }
 	static string solution_dir() { return "Solution/"; }
 
-public:
-	const string _ins_name;
+private:
+	string _ins_name;
+	string _submit_dir;
 };
 
 class Instance {
@@ -45,7 +54,10 @@ public:
 private:
 	void read_instance() {
 		ifstream ifs(_env.instance_path());
-		if (!ifs.is_open()) { cerr << "Error instance path: " << _env.instance_path() << endl; }
+		if (!ifs.is_open()) {
+			cerr << "Error instance path: " << _env.instance_path() << endl;
+			return;
+		}
 
 		_polygon_num = 0;
 		_total_area = 0;

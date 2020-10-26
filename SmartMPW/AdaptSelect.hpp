@@ -60,7 +60,7 @@ public:
 		}
 	}
 
-	void record_sol(string sol_path) const {
+	void record_sol(const string &sol_path) const {
 		ofstream sol_file(sol_path);
 		for (auto &dst_node : _dst) {
 			sol_file << "In Polygon:" << endl;
@@ -72,7 +72,7 @@ public:
 		}
 	}
 
-	void draw_html(string html_path) const {
+	void draw_html(const string &html_path) const {
 		utils_visualize_drawer::Drawer html_drawer(html_path, _cfg.ub_width, _cfg.ub_height);
 		for (auto &dst_node : _dst) {
 			string polygon_str;
@@ -82,7 +82,7 @@ public:
 		}
 	}
 
-	void record_log(string log_path) const {
+	void record_log(const string &log_path) const {
 		ofstream log_file(log_path, ios::app);
 		log_file.seekp(0, ios::end);
 		if (log_file.tellp() <= 0) {
@@ -91,7 +91,7 @@ public:
 				"Duration,RandomSeed"
 				<< endl;
 		}
-		log_file << _env._ins_name << ","
+		log_file << _env.instance_name() << ","
 			<< _obj_area << "," << _fill_ratio << "," << _wh_ratio << ","
 			<< _duration << "," << _cfg.random_seed << endl;
 	}
@@ -127,6 +127,8 @@ private:
 			_wh_ratio = 1.0 * cw_obj.value * cw_obj.value / _obj_area;
 			_dst = cw_obj.mbp_solver->get_dst();
 			_duration = (clock() - _start) / static_cast<double>(CLOCKS_PER_SEC);
+
+			record_sol(_env.solution_path()); // 每找到一个较好解就更新解文件
 		}
 	}
 

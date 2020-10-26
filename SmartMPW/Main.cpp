@@ -15,17 +15,17 @@ void run_single_instance() {
 	mbp_solver.random_local_search(1);
 }
 
-void run_all_instance() {
+void run_all_instances() {
 	Config cfg;
 	cfg.random_seed = random_device{}();
 	cfg.ub_iter = 9999;
 	cfg.ub_time = 60 * 15;
 
 	for (auto &ins : ins_list) {
+		cout << "load instance " << ins << endl;
 		Environment env(ins);
 		AdaptSelect asa(env, cfg);
 		asa.run();
-		asa.record_sol(env.solution_path());
 		asa.record_sol(env.solution_path_with_time());
 		asa.draw_html(env.html_path());
 		asa.draw_html(env.html_path_with_time());
@@ -33,11 +33,25 @@ void run_all_instance() {
 	}
 }
 
-int main() {
-	
-	run_all_instance();
+int main(int argc, char* argv[]) {
+	if (argc != 2) {
+		cerr << "Error parameter. See 'placement.exe /xxx/xxx/input.txt'." << endl;
+		return 0;
+	}
+	if (strcmp(argv[1], "all") == 0) {
+		cout << "Run all instances..." << endl;
+		run_all_instances();
+		return 0;
+	}
 
-	system("pause");
+	Config cfg;
+	cfg.random_seed = random_device{}();
+	cfg.ub_iter = 9999;
+	cfg.ub_time = 60 * 15;
+
+	Environment env(argv[1]);
+	AdaptSelect asa(env, cfg);
+	asa.run();
 
 	return 0;
 }

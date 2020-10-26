@@ -32,4 +32,9 @@ namespace utils {
 		}
 	};
 
+	static void split_filename(const string &str, string &path, string &file) {
+		size_t found = str.find_last_of("/\\");
+		path = str.substr(0, found + 1);
+		file = str.substr(found + 1);
+	}
 }
