@@ -10,13 +10,6 @@
 using namespace mbp;
 
 class AdaptSelect {
-public:
-
-	AdaptSelect() = delete;
-
-	AdaptSelect(const Environment &env, const Config &cfg) :
-		_env(env), _cfg(cfg), _ins(env), _gen(_cfg.random_seed),
-		_obj_area(numeric_limits<coord_t>::max()) {}
 
 	/// 候选宽度定义
 	struct CandidateWidth {
@@ -24,6 +17,14 @@ public:
 		int iter;
 		unique_ptr<MpwBinPack> mbp_solver; // 存指针，减少排序造成的开销
 	};
+
+public:
+
+	AdaptSelect() = delete;
+
+	AdaptSelect(const Environment &env, const Config &cfg) :
+		_env(env), _cfg(cfg), _ins(env), _gen(_cfg.random_seed),
+		_obj_area(numeric_limits<coord_t>::max()) {}
 
 	void run() {
 
@@ -41,7 +42,7 @@ public:
 		}
 
 		// 降序排列，越后面的选中概率越大
-		sort(cw_objs.begin(), cw_objs.end(), [](auto &lhs, auto &rhs) {
+		sort(cw_objs.begin(), cw_objs.end(), [](const CandidateWidth &lhs, const CandidateWidth &rhs) {
 			return lhs.mbp_solver->get_obj_area() > rhs.mbp_solver->get_obj_area(); });
 
 		// 初始化离散概率分布
@@ -55,7 +56,7 @@ public:
 			picked_width.iter = min(2 * picked_width.iter, _cfg.ub_iter);
 			picked_width.mbp_solver->random_local_search(picked_width.iter);
 			check_cwobj(picked_width);
-			sort(cw_objs.begin(), cw_objs.end(), [](auto &lhs, auto &rhs) {
+			sort(cw_objs.begin(), cw_objs.end(), [](const CandidateWidth &lhs, const CandidateWidth &rhs) {
 				return lhs.mbp_solver->get_obj_area() > rhs.mbp_solver->get_obj_area(); });
 		}
 	}

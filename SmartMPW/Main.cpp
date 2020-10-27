@@ -26,9 +26,9 @@ void run_all_instances() {
 		Environment env(ins);
 		AdaptSelect asa(env, cfg);
 		asa.run();
-		asa.record_sol(env.solution_path_with_time());
+		//asa.record_sol(env.solution_path_with_time());
 		asa.draw_html(env.html_path());
-		asa.draw_html(env.html_path_with_time());
+		//asa.draw_html(env.html_path_with_time());
 		asa.record_log(env.log_path());
 	}
 }

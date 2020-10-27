@@ -16,6 +16,12 @@ namespace mbp {
 
 	class MpwBinPack {
 
+		/// 排序规则定义
+		struct SortRule {
+			vector<size_t> sequence;
+			coord_t target_area;
+		};
+
 	public:
 
 		MpwBinPack() = delete;
@@ -47,7 +53,8 @@ namespace mbp {
 					}
 				}
 				// 降序排列，越后面的目标函数值越小选中概率越大
-				sort(_sort_rules.begin(), _sort_rules.end(), [](auto &lhs, auto &rhs) { return lhs.target_area > rhs.target_area; });
+				sort(_sort_rules.begin(), _sort_rules.end(), [](const SortRule &lhs, const SortRule &rhs) {
+					return lhs.target_area > rhs.target_area; });
 			}
 			// 迭代优化
 			SortRule &picked_rule = _sort_rules[_discrete_dist(_gen)];
@@ -70,7 +77,8 @@ namespace mbp {
 				}
 			}
 			// 更新排序规则列表
-			sort(_sort_rules.begin(), _sort_rules.end(), [](auto &lhs, auto &rhs) { return lhs.target_area > rhs.target_area; });
+			sort(_sort_rules.begin(), _sort_rules.end(), [](const SortRule &lhs, const SortRule &rhs) {
+				return lhs.target_area > rhs.target_area; });
 		}
 
 		coord_t insert_bottom_left_score(vector<polygon_ptr> &dst) {
@@ -80,7 +88,7 @@ namespace mbp {
 
 			while (!_polygons.empty()) {
 				auto bottom_skyline_iter = min_element(_skyline.begin(), _skyline.end(),
-					[](auto &lhs, auto &rhs) { return lhs.y < rhs.y; });
+					[](skylinenode_t &lhs, skylinenode_t &rhs) { return lhs.y < rhs.y; });
 				auto best_skyline_index = distance(_skyline.begin(), bottom_skyline_iter);
 
 				polygon_ptr best_dst_node;
@@ -99,7 +107,8 @@ namespace mbp {
 				}
 			}
 
-			return max_element(_skyline.begin(), _skyline.end(), [](auto &lhs, auto &rhs) { return lhs.y < rhs.y; })->y;
+			return max_element(_skyline.begin(), _skyline.end(),
+				[](skylinenode_t &lhs, skylinenode_t &rhs) { return lhs.y < rhs.y; })->y;
 		}
 
 	private:
@@ -108,12 +117,6 @@ namespace mbp {
 			_skyline.push_back({ 0,0,_bin_width });
 			debug_run(_dst_rings.clear());
 		}
-
-		/// 排序规则定义
-		struct SortRule {
-			vector<size_t> sequence;
-			coord_t target_area;
-		};
 
 		void init_sort_rules() {
 			// 0_输入顺序

@@ -84,7 +84,8 @@ struct Polygon {
 		: id(id_), rotation(Rotation::_0_), in_points(std::make_shared<std::vector<Point<T>>>(points)) {
 		for (const auto &point : points) { vis::bg::append(ring, vis::bg_point_t(point.x, point.y)); }
 		area = abs(vis::bg::area(ring));
-		max_length = max_element(segments.begin(), segments.end(), [](auto &lhs, auto &rhs) { return lhs.len < rhs.len; })->len;
+		max_length = max_element(segments.begin(), segments.end(),
+			[](const Segment<T> &lhs, const Segment<T> &rhs) { return lhs.len < rhs.len; })->len;
 	}
 
 	virtual Shape shape() = 0;
@@ -385,7 +386,7 @@ struct TShape : public Polygon<T> {
 		}
 		else if (right_segs.size() == 1) {
 			assert(left_segs.size() == 3 && up_segs.size() == 2 && down_segs.size() == 2);
-			if (segments[(right_segs[0] + 1) % segments.size()].dir == Direction::Down) { // ˳ 
+			if (segments[(right_segs[0] + 1) % segments.size()].dir == Direction::Down) { // ˳
 				hd = segments[right_segs[0]].len;
 				vld = segments[(right_segs[0] + 1) % segments.size()].len;
 				hl = segments[(right_segs[0] + 2) % segments.size()].len;

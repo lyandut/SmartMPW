@@ -24,9 +24,9 @@ public:
 		if (submit_dir().empty()) { return solution_dir() + _ins_name + ".txt"; }
 		return submit_dir() + "result.txt";
 	}
-	string solution_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".txt"; }
+	//string solution_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".txt"; }
 	string html_path() const { return solution_dir() + _ins_name + ".html"; }
-	string html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
+	//string html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
 	string log_path() const { return solution_dir() + "log.csv"; }
 
 private:
@@ -46,7 +46,7 @@ public:
 
 	size_t get_polygon_num() const { return _polygon_num; }
 
-	const auto& get_polygon_ptrs()  const { return _polygon_ptrs; }
+	const vector<polygon_ptr>& get_polygon_ptrs()  const { return _polygon_ptrs; }
 
 	// [todo] 预处理，合并部分L/T成矩形
 	void pre_combine() {}
