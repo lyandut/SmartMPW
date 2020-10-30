@@ -2,7 +2,8 @@
 // @author   liyan
 // @contact  lyan_dut@outlook.com
 //
-#pragma once
+#ifndef SMARTMPW_VISUALIZER_HPP
+#define SMARTMPW_VISUALIZER_HPP
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -182,3 +183,5 @@ namespace utils_visualize_drawer {
 		RandColor rc;
 	};
 }
+
+#endif // SMARTMPW_VISUALIZER_HPP

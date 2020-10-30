@@ -3,6 +3,7 @@
 
 Deploy/*
 !Deploy/Instance/
+!Deploy/Solution/
 
 # User-specific files
 *.suo

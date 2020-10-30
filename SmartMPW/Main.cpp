@@ -3,33 +3,25 @@
 
 #include "AdaptSelect.hpp"
 
-void run_single_instance() {
-	Config cfg;
-	cfg.random_seed = random_device{}();
-	default_random_engine gen(cfg.random_seed);
+void run_single_instance(const string &ins_str) {
+	Environment env(ins_str);
+	AdaptSelect asa(env, cfg);
+	asa.run();
+	asa.record_sol(env.solution_path());
 
-	Environment env("polygon_area_etc_input_10");
-	Instance ins(env);
-
-	mbp::MpwBinPack mbp_solver(ins.get_polygon_ptrs(), 50, INF, gen);
-	mbp_solver.random_local_search(1);
+#ifndef SUBMIT
+	asa.draw_ins();
+	asa.record_sol(env.solution_path_with_time());
+	asa.draw_sol(env.sol_html_path());
+	asa.draw_sol(env.sol_html_path_with_time());
+	asa.record_log();
+#endif // !SUBMIT
 }
 
 void run_all_instances() {
-	Config cfg;
-	cfg.random_seed = random_device{}();
-	cfg.ub_iter = 9999;
-	cfg.ub_time = 60 * 15;
-
 	for (auto &ins : ins_list) {
 		cout << "load instance " << ins << endl;
-		Environment env(ins);
-		AdaptSelect asa(env, cfg);
-		asa.run();
-		//asa.record_sol(env.solution_path_with_time());
-		asa.draw_html(env.html_path());
-		//asa.draw_html(env.html_path_with_time());
-		asa.record_log(env.log_path());
+		run_single_instance(ins);
 	}
 }
 
@@ -38,20 +30,14 @@ int main(int argc, char* argv[]) {
 		cerr << "Error parameter. See 'placement.exe /xxx/xxx/input.txt'." << endl;
 		return 0;
 	}
-	if (strcmp(argv[1], "all") == 0) {
+
+	if (strcmp(argv[1], "--all") == 0) {
 		cout << "Run all instances..." << endl;
 		run_all_instances();
 		return 0;
 	}
 
-	Config cfg;
-	cfg.random_seed = random_device{}();
-	cfg.ub_iter = 9999;
-	cfg.ub_time = 60 * 15;
-
-	Environment env(argv[1]);
-	AdaptSelect asa(env, cfg);
-	asa.run();
+	run_single_instance(argv[1]);
 
 	return 0;
 }

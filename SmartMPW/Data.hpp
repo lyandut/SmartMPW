@@ -2,16 +2,8 @@
 // @author   liyan
 // @contact  lyan_dut@outlook.com
 //
-#pragma once
-
-#ifdef _DEBUG
-/// debug_assert is an assert that also requires debug mode to be defined.
-#define debug_assert(x) assert(x)
-#define debug_run(x) x
-#else
-#define debug_assert(x)
-#define debug_run(x)
-#endif
+#ifndef SMARTMPW_DATA_HPP
+#define SMARTMPW_DATA_HPP
 
 #include <vector>
 #include <memory>
@@ -21,7 +13,7 @@
 
 namespace vis = utils_visualize;
 
-enum Shape { R, L, T };
+enum Shape { R, L, T, C };
 
 enum Rotation { _0_, _90_, _180_, _270_ };
 
@@ -62,11 +54,22 @@ struct Segment {
 		else { assert(false); }
 	}
 
-	bool is_vertical(const Segment& seg) const {
+	bool is_vertical(const Segment &seg) const {
 		if (dir == Direction::Up || dir == Direction::Down)
 			return (seg.dir == Direction::Left || seg.dir == Direction::Right);
 		else
 			return (seg.dir == Direction::Up || seg.dir == Direction::Down);
+	}
+
+	Direction next_turn(const Segment &next_seg) const {
+		if (dir == Direction::Up && next_seg.dir == Direction::Left) return Direction::Left;
+		else if (dir == Direction::Up && next_seg.dir == Direction::Right) return Direction::Right;
+		else if (dir == Direction::Down && next_seg.dir == Direction::Right) return Direction::Left;
+		else if (dir == Direction::Down && next_seg.dir == Direction::Left) return Direction::Right;
+		else if (dir == Direction::Left && next_seg.dir == Direction::Down) return Direction::Left;
+		else if (dir == Direction::Left && next_seg.dir == Direction::Up) return Direction::Right;
+		else if (dir == Direction::Right && next_seg.dir == Direction::Up) return Direction::Left;
+		else assert(dir == Direction::Right && next_seg.dir == Direction::Down); return Direction::Right;
 	}
 };
 
@@ -82,7 +85,7 @@ struct Polygon {
 
 	Polygon(int id_, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
 		: id(id_), rotation(Rotation::_0_), in_points(std::make_shared<std::vector<Point<T>>>(points)) {
-		for (const auto &point : points) { vis::bg::append(ring, vis::bg_point_t(point.x, point.y)); }
+		for (auto &point : points) { vis::bg::append(ring, vis::bg_point_t(point.x, point.y)); }
 		area = abs(vis::bg::area(ring));
 		max_length = max_element(segments.begin(), segments.end(),
 			[](const Segment<T> &lhs, const Segment<T> &rhs) { return lhs.len < rhs.len; })->len;
@@ -132,21 +135,11 @@ struct LShape : public Polygon<T> {
 
 		for (size_t i = 0; i < segments.size(); ++i) {
 			switch (segments[i].dir) {
-			case Direction::Up:
-				up_segs.push_back(i);
-				break;
-			case Direction::Down:
-				down_segs.push_back(i);
-				break;
-			case Direction::Left:
-				left_segs.push_back(i);
-				break;
-			case Direction::Right:
-				right_segs.push_back(i);
-				break;
-			default:
-				assert(false);
-				break;
+			case Direction::Up:    up_segs.push_back(i);    break;
+			case Direction::Down:  down_segs.push_back(i);  break;
+			case Direction::Left:  left_segs.push_back(i);  break;
+			case Direction::Right: right_segs.push_back(i); break;
+			default:               assert(false);           break;
 			}
 		}
 
@@ -294,21 +287,11 @@ struct TShape : public Polygon<T> {
 
 		for (size_t i = 0; i < segments.size(); ++i) {
 			switch (segments[i].dir) {
-			case Direction::Up:
-				up_segs.push_back(i);
-				break;
-			case Direction::Down:
-				down_segs.push_back(i);
-				break;
-			case Direction::Left:
-				left_segs.push_back(i);
-				break;
-			case Direction::Right:
-				right_segs.push_back(i);
-				break;
-			default:
-				assert(false);
-				break;
+			case Direction::Up:    up_segs.push_back(i);    break;
+			case Direction::Down:  down_segs.push_back(i);  break;
+			case Direction::Left:  left_segs.push_back(i);  break;
+			case Direction::Right: right_segs.push_back(i); break;
+			default:               assert(false);           break;
 			}
 		}
 
@@ -467,6 +450,146 @@ struct TShape : public Polygon<T> {
 };
 
 template<typename T>
+struct Concave : public Polygon<T> {
+	T hu, hl, hr, hd; // hu+hl+hr=hd
+	T vlu, vld, vru, vrd; // vld-vlu=vrd-vru
+
+	Concave(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
+		: Polygon<T>(id, points, segments) {
+		std::vector<size_t> up_segs; up_segs.reserve(3);
+		std::vector<size_t> down_segs; down_segs.reserve(3);
+		std::vector<size_t> left_segs; left_segs.reserve(3);
+		std::vector<size_t> right_segs; right_segs.reserve(3);
+
+		for (size_t i = 0; i < segments.size(); ++i) {
+			switch (segments[i].dir) {
+			case Direction::Up:    up_segs.push_back(i);    break;
+			case Direction::Down:  down_segs.push_back(i);  break;
+			case Direction::Left:  left_segs.push_back(i);  break;
+			case Direction::Right: right_segs.push_back(i); break;
+			default:               assert(false);           break;
+			}
+		}
+
+		if (up_segs.size() == 1) {
+			assert(down_segs.size() == 3 && left_segs.size() == 2 && right_segs.size() == 2);
+			if (segments[(up_segs[0] + 1) % segments.size()].dir == Direction::Right) { // Ë³
+				hd = segments[up_segs[0]].len;
+				vld = segments[(up_segs[0] + 1) % segments.size()].len;
+				hl = segments[(up_segs[0] + 2) % segments.size()].len;
+				vlu = segments[(up_segs[0] + 3) % segments.size()].len;
+				hu = segments[(up_segs[0] + 4) % segments.size()].len;
+				vru = segments[(up_segs[0] + 5) % segments.size()].len;
+				hr = segments[(up_segs[0] + 6) % segments.size()].len;
+				vrd = segments[(up_segs[0] + 7) % segments.size()].len;
+			}
+			else if (segments[(up_segs[0] + 1) % segments.size()].dir == Direction::Left) { // Äæ
+				hd = segments[up_segs[0]].len;
+				vrd = segments[(up_segs[0] + 1) % segments.size()].len;
+				hr = segments[(up_segs[0] + 2) % segments.size()].len;
+				vru = segments[(up_segs[0] + 3) % segments.size()].len;
+				hu = segments[(up_segs[0] + 4) % segments.size()].len;
+				vlu = segments[(up_segs[0] + 5) % segments.size()].len;
+				hl = segments[(up_segs[0] + 6) % segments.size()].len;
+				vld = segments[(up_segs[0] + 7) % segments.size()].len;
+			}
+			else { assert(false); }
+		}
+		else if (down_segs.size() == 1) {
+			assert(up_segs.size() == 3 && left_segs.size() == 2 && right_segs.size() == 2);
+			if (segments[(down_segs[0] + 1) % segments.size()].dir == Direction::Left) { // Ë³
+				hd = segments[down_segs[0]].len;
+				vld = segments[(down_segs[0] + 1) % segments.size()].len;
+				hl = segments[(down_segs[0] + 2) % segments.size()].len;
+				vlu = segments[(down_segs[0] + 3) % segments.size()].len;
+				hu = segments[(down_segs[0] + 4) % segments.size()].len;
+				vru = segments[(down_segs[0] + 5) % segments.size()].len;
+				hr = segments[(down_segs[0] + 6) % segments.size()].len;
+				vrd = segments[(down_segs[0] + 7) % segments.size()].len;
+			}
+			else if (segments[(down_segs[0] + 1) % segments.size()].dir == Direction::Right) { // Äæ
+				hd = segments[down_segs[0]].len;
+				vrd = segments[(down_segs[0] + 1) % segments.size()].len;
+				hr = segments[(down_segs[0] + 2) % segments.size()].len;
+				vru = segments[(down_segs[0] + 3) % segments.size()].len;
+				hu = segments[(down_segs[0] + 4) % segments.size()].len;
+				vlu = segments[(down_segs[0] + 5) % segments.size()].len;
+				hl = segments[(down_segs[0] + 6) % segments.size()].len;
+				vld = segments[(down_segs[0] + 7) % segments.size()].len;
+			}
+			else { assert(false); }
+		}
+		else if (left_segs.size() == 1) {
+			assert(right_segs.size() == 3 && up_segs.size() == 2 && down_segs.size() == 2);
+			if (segments[(left_segs[0] + 1) % segments.size()].dir == Direction::Up) { // Ë³
+				hd = segments[left_segs[0]].len;
+				vld = segments[(left_segs[0] + 1) % segments.size()].len;
+				hl = segments[(left_segs[0] + 2) % segments.size()].len;
+				vlu = segments[(left_segs[0] + 3) % segments.size()].len;
+				hu = segments[(left_segs[0] + 4) % segments.size()].len;
+				vru = segments[(left_segs[0] + 5) % segments.size()].len;
+				hr = segments[(left_segs[0] + 6) % segments.size()].len;
+				vrd = segments[(left_segs[0] + 7) % segments.size()].len;
+			}
+			else if (segments[(left_segs[0] + 1) % segments.size()].dir == Direction::Down) { // Äæ
+				hd = segments[left_segs[0]].len;
+				vrd = segments[(left_segs[0] + 1) % segments.size()].len;
+				hr = segments[(left_segs[0] + 2) % segments.size()].len;
+				vru = segments[(left_segs[0] + 3) % segments.size()].len;
+				hu = segments[(left_segs[0] + 4) % segments.size()].len;
+				vlu = segments[(left_segs[0] + 5) % segments.size()].len;
+				hl = segments[(left_segs[0] + 6) % segments.size()].len;
+				vld = segments[(left_segs[0] + 7) % segments.size()].len;
+			}
+			else { assert(false); }
+		}
+		else if (right_segs.size() == 1) {
+			assert(left_segs.size() == 3 && up_segs.size() == 2 && down_segs.size() == 2);
+			if (segments[(right_segs[0] + 1) % segments.size()].dir == Direction::Down) { // Ë³
+				hd = segments[right_segs[0]].len;
+				vld = segments[(right_segs[0] + 1) % segments.size()].len;
+				hl = segments[(right_segs[0] + 2) % segments.size()].len;
+				vlu = segments[(right_segs[0] + 3) % segments.size()].len;
+				hu = segments[(right_segs[0] + 4) % segments.size()].len;
+				vru = segments[(right_segs[0] + 5) % segments.size()].len;
+				hr = segments[(right_segs[0] + 6) % segments.size()].len;
+				vrd = segments[(right_segs[0] + 7) % segments.size()].len;
+			}
+			else if (segments[(right_segs[0] + 1) % segments.size()].dir == Direction::Up) { // Äæ
+				hd = segments[right_segs[0]].len;
+				vrd = segments[(right_segs[0] + 1) % segments.size()].len;
+				hr = segments[(right_segs[0] + 2) % segments.size()].len;
+				vru = segments[(right_segs[0] + 3) % segments.size()].len;
+				hu = segments[(right_segs[0] + 4) % segments.size()].len;
+				vlu = segments[(right_segs[0] + 5) % segments.size()].len;
+				hl = segments[(right_segs[0] + 6) % segments.size()].len;
+				vld = segments[(right_segs[0] + 7) % segments.size()].len;
+			}
+			else { assert(false); }
+		}
+		else { assert(false); }
+
+		assert(hu + hl + hr == hd && vld - vlu == vrd - vru);
+	}
+
+	Shape shape() { return Shape::C; }
+
+	void to_ring() {
+		vis::bg::clear(this->ring);
+		assert(this->rotation == Rotation::_0_);
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y + vld));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl, this->lb_point.y + vld));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl, this->lb_point.y + vld - vlu));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl + hu, this->lb_point.y + vld - vlu));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hl + hu, this->lb_point.y + vrd));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hd, this->lb_point.y + vrd));
+		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x + hd, this->lb_point.y));
+		assert(this->area == vis::bg::area(this->ring));
+	}
+};
+
+template<typename T>
 struct SkyLineNode {
 	T x, y;
 	T width;
@@ -484,6 +607,8 @@ using lshape_t = LShape<coord_t>;
 
 using tshape_t = TShape<coord_t>;
 
+using concave_t = Concave<coord_t>;
+
 using polygon_ptr = std::shared_ptr<polygon_t>;
 
 using rect_ptr = std::shared_ptr<rect_t>;
@@ -492,6 +617,10 @@ using lshape_ptr = std::shared_ptr<lshape_t>;
 
 using tshape_ptr = std::shared_ptr<tshape_t>;
 
+using concave_ptr = std::shared_ptr<concave_t>;
+
 using skylinenode_t = SkyLineNode<coord_t>;
 
 using skyline_t = std::vector<skylinenode_t>;
+
+#endif // SMARTMPW_DATA_HPP

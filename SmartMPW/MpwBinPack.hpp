@@ -2,7 +2,8 @@
 // @author   liyan
 // @contact  lyan_dut@outlook.com
 //
-#pragma once
+#ifndef SMARTMPW_MPWBINPACK_HPP
+#define SMARTMPW_MPWBINPACK_HPP
 
 #include <list>
 #include <numeric>
@@ -81,6 +82,7 @@ namespace mbp {
 				return lhs.target_area > rhs.target_area; });
 		}
 
+		/// 基于最下最左和打分策略，贪心构造一个完整解
 		coord_t insert_bottom_left_score(vector<polygon_ptr> &dst) {
 			reset();
 			dst.clear();
@@ -96,7 +98,7 @@ namespace mbp {
 				if (find_polygon_for_skyline_bottom_left(best_skyline_index, _polygons, best_dst_node, best_polygon_index)) {
 					_polygons.remove(best_polygon_index);
 					best_dst_node->to_ring();
-					debug_assert(!check_overlap(_dst_rings, best_dst_node));
+					assert(!check_overlap(_dst_rings, best_dst_node));
 					dst.push_back(best_dst_node);
 				}
 				else { // 填坑
@@ -183,6 +185,16 @@ namespace mbp {
 					if (score_tshape_for_skyline_bottom_left(skyline_index, tshape, score)) {
 						best_polygon_index = p;
 						best_dst_node = make_shared<tshape_t>(*tshape);
+						return true; // _skyline已被更新
+					}
+					break;
+				}
+				case Shape::C: {
+					auto concave = dynamic_pointer_cast<concave_t>(_src.at(p));
+					int score;
+					if (score_concave_for_skyline_bottom_left(skyline_index, concave, score)) {
+						best_polygon_index = p;
+						best_dst_node = make_shared<concave_t>(*concave);
 						return true; // _skyline已被更新
 					}
 					break;
@@ -290,7 +302,7 @@ namespace mbp {
 				skyline_90 = _skyline, skyline_180 = _skyline,
 				skyline_270l = _skyline, skyline_270r = _skyline;
 			size_t skyline_old_size = _skyline.size();
-			size_t min_delta = numeric_limits<size_t>::max();
+			int min_delta = numeric_limits<int>::max();
 
 			if (lshape->hd <= space.width) { // 0&靠左
 				// lb_point
@@ -343,7 +355,7 @@ namespace mbp {
 				}
 			}
 
-			if (skyline_index < skyline_90.size() - 1
+			if (skyline_index + 1 < skyline_90.size()
 				&& lshape->vm <= skyline_90[skyline_index + 1].width
 				&& lshape->hm == space.hr
 				&& lshape->vr <= space.width) {
@@ -449,7 +461,7 @@ namespace mbp {
 				}
 			}
 
-			if (min_delta == numeric_limits<size_t>::max()) { return false; }
+			if (min_delta == numeric_limits<int>::max()) { return false; }
 			score = 10;
 			return true;
 		}
@@ -460,7 +472,7 @@ namespace mbp {
 			skyline_t skyline_0l = _skyline, skyline_0r = _skyline,
 				skyline_90 = _skyline, skyline_180 = _skyline, skyline_270 = _skyline;
 			size_t skyline_old_size = _skyline.size();
-			size_t min_delta = numeric_limits<size_t>::max();
+			int min_delta = numeric_limits<int>::max();
 
 			if (tshape->hd <= space.width) { // 0&靠左
 				// lb_point
@@ -521,7 +533,7 @@ namespace mbp {
 				}
 			}
 
-			if (skyline_index < skyline_90.size() - 1
+			if (skyline_index + 1 < skyline_90.size()
 				&& tshape->vru <= skyline_90[skyline_index + 1].width
 				&& tshape->hr == space.hr
 				&& tshape->vrd <= space.width) {
@@ -552,7 +564,7 @@ namespace mbp {
 				}
 			}
 
-			if (skyline_index < skyline_180.size() - 1 && skyline_index >= 1
+			if (skyline_index + 1 < skyline_180.size() && skyline_index >= 1
 				&& tshape->hl <= skyline_180[skyline_index + 1].width
 				&& tshape->hr <= skyline_180[skyline_index - 1].width
 				&& tshape->vlu == space.hr
@@ -612,7 +624,78 @@ namespace mbp {
 				}
 			}
 
-			if (min_delta == numeric_limits<size_t>::max()) { return false; }
+			if (min_delta == numeric_limits<int>::max()) { return false; }
+			score = 20;
+			return true;
+		}
+
+		/// C打分策略
+		bool score_concave_for_skyline_bottom_left(size_t skyline_index, const concave_ptr &concave, int &score) {
+			SkylineSpace space = skyline_nodo_to_space(skyline_index);
+			skyline_t skyline_0l = _skyline, skyline_0r = _skyline;
+			size_t skyline_old_size = _skyline.size();
+			int min_delta = numeric_limits<int>::max();
+
+			if (concave->hd <= space.width) { // 0&靠左
+				// lb_point
+				point_t lb_point_0l = { skyline_0l[skyline_index].x, skyline_0l[skyline_index].y };
+				// update
+				skyline_0l[skyline_index].y += concave->vld;
+				skyline_0l[skyline_index].width = concave->hl;
+				// add
+				skyline_0l.insert(skyline_0l.begin() + skyline_index + 1, {
+					skyline_0l[skyline_index].x + skyline_0l[skyline_index].width,
+					skyline_0l[skyline_index].y - concave->vlu,
+					concave->hu });
+				skyline_0l.insert(skyline_0l.begin() + skyline_index + 2, {
+					skyline_0l[skyline_index + 1].x + skyline_0l[skyline_index + 1].width,
+					skyline_0l[skyline_index + 1].y + concave->vru,
+					concave->hr });
+				skyline_0l.insert(skyline_0l.begin() + skyline_index + 3, {
+					skyline_0l[skyline_index + 2].x + skyline_0l[skyline_index + 2].width,
+					skyline_0l[skyline_index + 2].y - concave->vrd,
+					space.width - concave->hd });
+				// merge
+				merge_skylines(skyline_0l);
+				// delta
+				if (min_delta > skyline_0l.size() - skyline_old_size) {
+					min_delta = skyline_0l.size() - skyline_old_size;
+					concave->rotation = Rotation::_0_;
+					concave->lb_point = lb_point_0l;
+					_skyline = skyline_0l;
+				}
+			}
+
+			if (concave->hd < space.width) { // 0&靠右
+				// lb_point
+				point_t lb_point_0r = { skyline_0r[skyline_index].x + space.width - concave->hd, skyline_0r[skyline_index].y };
+				// update
+				skyline_0r[skyline_index].width -= concave->hd;
+				// add
+				skyline_0r.insert(skyline_0r.begin() + skyline_index + 1, {
+					skyline_0r[skyline_index].x + skyline_0r[skyline_index].width,
+					skyline_0r[skyline_index].y + concave->vld,
+					concave->hl });
+				skyline_0r.insert(skyline_0r.begin() + skyline_index + 2, {
+					skyline_0r[skyline_index + 1].x + skyline_0r[skyline_index + 1].width,
+					skyline_0r[skyline_index + 1].y - concave->vlu,
+					concave->hu });
+				skyline_0r.insert(skyline_0r.begin() + skyline_index + 3, {
+					skyline_0r[skyline_index + 2].x + skyline_0r[skyline_index + 2].width,
+					skyline_0r[skyline_index + 2].y + concave->vru,
+					concave->hr });
+				// merge
+				merge_skylines(skyline_0r);
+				// delta
+				if (min_delta > skyline_0r.size() - skyline_old_size) {
+					min_delta = skyline_0r.size() - skyline_old_size;
+					concave->rotation = Rotation::_0_;
+					concave->lb_point = lb_point_0r;
+					_skyline = skyline_0r;
+				}
+			}
+
+			if (min_delta == numeric_limits<int>::max()) { return false; }
 			score = 20;
 			return true;
 		}
@@ -662,4 +745,4 @@ namespace mbp {
 
 }
 
-
+#endif // SMARTMPW_MPWBINPACK_HPP

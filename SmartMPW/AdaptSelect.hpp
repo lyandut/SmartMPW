@@ -2,7 +2,8 @@
 // @author   liyan
 // @contact  lyan_dut@outlook.com
 //
-#pragma once
+#ifndef SMARTMPW_ADAPTSELECT_HPP
+#define SMARTMPW_ADAPTSELECT_HPP
 
 #include "Instance.hpp"
 #include "MpwBinPack.hpp"
@@ -50,12 +51,14 @@ public:
 		for (int i = 1; i <= cw_objs.size(); ++i) { probs.push_back(2 * i); }
 		discrete_distribution<> discrete_dist(probs.begin(), probs.end());
 
-		// 迭代优化 
-		while ((clock() - _start) / static_cast<double>(CLOCKS_PER_SEC) < _cfg.ub_time) {
+		// 迭代优化
+		int curr_iter = 0; _iteration = 0;
+		while ((clock() - _start) / static_cast<double>(CLOCKS_PER_SEC) < _cfg.ub_asa_time
+			&& curr_iter++ - _iteration < _cfg.ub_asa_iter) {
 			CandidateWidth &picked_width = cw_objs[discrete_dist(_gen)];
-			picked_width.iter = min(2 * picked_width.iter, _cfg.ub_iter);
+			picked_width.iter = min(2 * picked_width.iter, _cfg.ub_rls_iter);
 			picked_width.mbp_solver->random_local_search(picked_width.iter);
-			check_cwobj(picked_width);
+			_iteration = check_cwobj(picked_width) ? curr_iter : _iteration;
 			sort(cw_objs.begin(), cw_objs.end(), [](const CandidateWidth &lhs, const CandidateWidth &rhs) {
 				return lhs.mbp_solver->get_obj_area() > rhs.mbp_solver->get_obj_area(); });
 		}
@@ -66,14 +69,27 @@ public:
 		for (auto &dst_node : _dst) {
 			sol_file << "In Polygon:" << endl;
 			for (auto &point : *dst_node->in_points) { sol_file << "(" << point.x << "," << point.y << ")"; }
-			sol_file << endl << "Polygon:" << endl;
+			sol_file << endl << "Out Polygon:" << endl;
 			vis::bg::for_each_point(dst_node->ring, [&](vis::bg_point_t &point) {
 				sol_file << "(" << point.x() << "," << point.y() << ")"; });
 			sol_file << endl;
 		}
 	}
 
-	void draw_html(const string &html_path) const {
+#ifndef SUBMIT
+	void draw_ins() const {
+		ifstream ifs(_env.ins_html_path());
+		if (ifs.good()) { return; }
+		utils_visualize_drawer::Drawer html_drawer(_env.ins_html_path(), _cfg.ub_width, _cfg.ub_height);
+		for (auto &src_node : _ins.get_polygon_ptrs()) {
+			string polygon_str;
+			vis::bg::for_each_point(src_node->ring, [&](vis::bg_point_t &point) {
+				polygon_str += to_string(point.x()) + "," + to_string(point.y()) + " "; });
+			html_drawer.polygon(polygon_str);
+		}
+	}
+
+	void draw_sol(const string &html_path) const {
 		utils_visualize_drawer::Drawer html_drawer(html_path, _cfg.ub_width, _cfg.ub_height);
 		for (auto &dst_node : _dst) {
 			string polygon_str;
@@ -83,19 +99,22 @@ public:
 		}
 	}
 
-	void record_log(const string &log_path) const {
-		ofstream log_file(log_path, ios::app);
+	void record_log() const {
+		ofstream log_file(_env.log_path(), ios::app);
 		log_file.seekp(0, ios::end);
 		if (log_file.tellp() <= 0) {
 			log_file << "Instance,"
-				"ObjArea,FillRatio,WHRatio,"
-				"Duration,RandomSeed"
-				<< endl;
+				"InsArea,ObjArea,FillRatio,"
+				"Width,Height,WHRatio,"
+				"Iteration,Duration,TotalDuration,RandomSeed" << endl;
 		}
 		log_file << _env.instance_name() << ","
-			<< _obj_area << "," << _fill_ratio << "," << _wh_ratio << ","
-			<< _duration << "," << _cfg.random_seed << endl;
+			<< _ins.get_total_area() << "," << _obj_area << "," << _fill_ratio << ","
+			<< _width << "," << _height << "," << _wh_ratio << ","
+			<< _iteration << "," << _duration << ","
+			<< (clock() - _start) / static_cast<double>(CLOCKS_PER_SEC) << "," << _cfg.random_seed << endl;
 	}
+#endif // !SUBMIT
 
 private:
 	/// 在区间[lb_width, ub_width]内，等距地生成候选宽度
@@ -118,19 +137,21 @@ private:
 	}
 
 	/// 检查cw_obj的RLS结果
-	void check_cwobj(const CandidateWidth &cw_obj) {
+	bool check_cwobj(const CandidateWidth &cw_obj) {
 		if (1.0 * cw_obj.mbp_solver->get_obj_area() / cw_obj.value > _cfg.ub_height) {
 			cw_obj.mbp_solver->reset_obj_area(); // 当前解不合法
 		}
 		if (cw_obj.mbp_solver->get_obj_area() < _obj_area) {
 			_obj_area = cw_obj.mbp_solver->get_obj_area();
 			_fill_ratio = 1.0 * _ins.get_total_area() / _obj_area;
-			_wh_ratio = 1.0 * cw_obj.value * cw_obj.value / _obj_area;
+			_width = cw_obj.value;
+			_height = _obj_area / _width;
+			_wh_ratio = 1.0 * _width / _height;
 			_dst = cw_obj.mbp_solver->get_dst();
 			_duration = (clock() - _start) / static_cast<double>(CLOCKS_PER_SEC);
-
-			record_sol(_env.solution_path()); // 每找到一个较好解就更新解文件
+			return true;
 		}
+		return false;
 	}
 
 private:
@@ -140,10 +161,15 @@ private:
 	const Instance _ins;
 	default_random_engine _gen;
 	clock_t _start;
-	double _duration;
+	double _duration; // 最优解出现时间
+	int _iteration;   // 最优解出现迭代次数
 
 	coord_t _obj_area;
 	double _fill_ratio;
+	coord_t _width;
+	coord_t _height;
 	double _wh_ratio;
 	vector<polygon_ptr> _dst;
 };
+
+#endif // SMARTMPW_ADAPTSELECT_HPP
