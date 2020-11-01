@@ -111,7 +111,7 @@ struct Rect : public Polygon<T> {
 
 	void to_ring() {
 		vis::bg::clear(this->ring);
-		coord_t w = width, h = height;
+		T w = width, h = height;
 		if (this->rotation == Rotation::_90_) { std::swap(w, h); }
 		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y));
 		vis::bg::append(this->ring, vis::bg_point_t(this->lb_point.x, this->lb_point.y + h));

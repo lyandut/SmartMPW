@@ -138,14 +138,18 @@ private:
 
 	/// 检查cw_obj的RLS结果
 	bool check_cwobj(const CandidateWidth &cw_obj) {
-		if (1.0 * cw_obj.mbp_solver->get_obj_area() / cw_obj.value > _cfg.ub_height) {
-			cw_obj.mbp_solver->reset_obj_area(); // 当前解不合法
+		coord_t cw_height = cw_obj.mbp_solver->get_obj_area() / cw_obj.value;
+		if (cw_height > _cfg.ub_height) { // 解高度超出上界，不合法
+			cw_obj.mbp_solver->set_obj_area(numeric_limits<coord_t>::max());
+		}
+		if (cw_height < _cfg.lb_height) { // 解高度不足下界，按下界计算
+			cw_obj.mbp_solver->set_obj_area(cw_obj.value * _cfg.lb_height);
 		}
 		if (cw_obj.mbp_solver->get_obj_area() < _obj_area) {
 			_obj_area = cw_obj.mbp_solver->get_obj_area();
 			_fill_ratio = 1.0 * _ins.get_total_area() / _obj_area;
 			_width = cw_obj.value;
-			_height = _obj_area / _width;
+			_height = cw_height;
 			_wh_ratio = 1.0 * _width / _height;
 			_dst = cw_obj.mbp_solver->get_dst();
 			_duration = (clock() - _start) / static_cast<double>(CLOCKS_PER_SEC);

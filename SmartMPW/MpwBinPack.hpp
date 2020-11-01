@@ -38,7 +38,7 @@ namespace mbp {
 
 		coord_t get_obj_area() const { return _obj_area; }
 
-		void reset_obj_area() { _obj_area = numeric_limits<coord_t>::max(); }
+		void set_obj_area(coord_t area) { _obj_area = area; }
 
 		/// 基于bin_width进行RLS
 		void random_local_search(int iter) {
