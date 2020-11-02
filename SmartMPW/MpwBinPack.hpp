@@ -97,8 +97,6 @@ namespace mbp {
 				size_t best_polygon_index;
 				if (find_polygon_for_skyline_bottom_left(best_skyline_index, _polygons, best_dst_node, best_polygon_index)) {
 					_polygons.remove(best_polygon_index);
-					best_dst_node->to_ring();
-					assert(!check_overlap(_dst_rings, best_dst_node));
 					dst.push_back(best_dst_node);
 				}
 				else { // 填坑
@@ -117,7 +115,6 @@ namespace mbp {
 		void reset() {
 			_skyline.clear();
 			_skyline.push_back({ 0,0,_bin_width });
-			debug_run(_dst_rings.clear());
 		}
 
 		void init_sort_rules() {
@@ -715,13 +712,6 @@ namespace mbp {
 			}
 		}
 
-		/// 重叠检测
-		static bool check_overlap(vector<vis::bg_ring_t> &dst_rings, const polygon_ptr &new_dst_node) {
-			for (auto &ring : dst_rings) { if (vis::bg::overlaps(ring, new_dst_node->ring)) { return true; } }
-			dst_rings.push_back(new_dst_node->ring);
-			return false;
-		}
-
 	private:
 		// 输入
 		const vector<polygon_ptr> &_src;
@@ -738,9 +728,6 @@ namespace mbp {
 		discrete_distribution<> _discrete_dist;   // 离散概率分布，用于挑选规则(即挑选sequence赋给_polygons)
 		uniform_int_distribution<> _uniform_dist; // 均匀分布，用于交换sequence顺序
 		default_random_engine &_gen;
-
-		// 可视化 & 重叠检查
-		debug_run(vector<vis::bg_ring_t> _dst_rings;)
 	};
 
 }

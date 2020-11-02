@@ -2,26 +2,25 @@
 // @author   liyan
 // @contact  lyan_dut@outlook.com
 //
-#ifndef SMARTMPW_DATA_HPP
-#define SMARTMPW_DATA_HPP
+#ifndef SMARTMPW_CHECKER_DATA_HPP
+#define SMARTMPW_CHECKER_DATA_HPP
 
+#include <string>
 #include <vector>
 #include <memory>
 #include <cassert>
 
-#include "Config.hpp"
+#include "Visualizer.hpp"
+
+namespace vis = utils_visualize;
 
 enum Shape { R, L, T, C };
-
-enum Rotation { _0_, _90_, _180_, _270_ };
 
 enum Direction { Left, Right, Up, Down };
 
 template<typename T>
 struct Point {
 	T x, y;
-
-	Point(T x_, T y_) : x(x_), y(y_) {}
 	bool operator==(const Point& p) { return x == p.x && y == p.y; }
 };
 
@@ -73,50 +72,63 @@ struct Segment {
 	}
 };
 
+template<typename> struct Polygon;
+template<typename T>
+bool operator==(const Polygon<T> &lhs, const Polygon<T> &rhs) {
+	return typeid(lhs) == typeid(rhs) && lhs.equal(rhs);
+}
+template<typename T>
+bool operator!=(const Polygon<T> &lhs, const Polygon<T> &rhs) {
+	return !(lhs == rhs);
+}
+
 template<typename T>
 struct Polygon {
 	const int id;
-	const std::shared_ptr<std::vector<Point<T>>> in_points; // 输入坐标序列
+	const std::string str;
+	vis::bg_ring_t ring;
 	T area;
-	T max_length;
-	Point<T> lb_point; // 参考坐标（求解）
-	Rotation rotation; // 旋转角度（求解）
-	std::vector<Point<T>> out_points; // 输出坐标序列
 
-	Polygon(int id_, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments) :
-		id(id_), in_points(std::make_shared<std::vector<Point<T>>>(points)),
-		lb_point(0, 0), rotation(Rotation::_0_),
-		max_length(max_element(segments.begin(), segments.end(),
-			[](const Segment<T> &lhs, const Segment<T> &rhs) { return lhs.len < rhs.len; })->len) {}
+	friend bool operator==<T>(const Polygon&, const Polygon&);
+	//template<typename T>
+	//friend bool operator==(const Polygon&, const Polygon&);
+
+	Polygon(int id_, const std::string &str_, const std::vector<Point<T>> &points) : id(id_), str(str_) {
+		for (auto &point : points) { vis::bg::append(ring, vis::bg_point_t(point.x, point.y)); }
+		area = abs(vis::bg::area(ring));
+	}
 
 	virtual Shape shape() = 0;
-	virtual void to_out_points() = 0; // 根据lb_point和rotation确定out_points，仅写sol文件时调用即可
+	virtual bool equal(const Polygon<T>&rhs) const = 0;
 };
+
+//template<typename T>
+//bool operator==(const Polygon<T> &lhs, const Polygon<T> &rhs) {
+//	return typeid(lhs) == typeid(rhs) && lhs.equal(rhs);
+//}
+//template<typename T>
+//bool operator!=(const Polygon<T> &lhs, const Polygon<T> &rhs) {
+//	return !(lhs == rhs);
+//}
 
 template<typename T>
 struct Rect : public Polygon<T> {
 	T width, height;
 
-	Rect(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
-		: Polygon<T>(id, points, segments) {
+	Rect(int id, const std::string &str, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
+		: Polygon<T>(id, str, points) {
 		assert(segments.size() == 4);
 		width = segments[0].len;
 		height = segments[1].len;
 		assert(width == segments[2].len && height == segments[3].len);
-		this->area = width * height;
 	}
 
 	Shape shape() { return Shape::R; }
 
-	void to_out_points() {
-		this->out_points.clear();
-		this->out_points.reserve(4);
-		coord_t w = width, h = height;
-		if (this->rotation == Rotation::_90_) { std::swap(w, h); }
-		this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-		this->out_points.emplace_back(this->lb_point.x, this->lb_point.y + h);
-		this->out_points.emplace_back(this->lb_point.x + w, this->lb_point.y + h);
-		this->out_points.emplace_back(this->lb_point.x + w, this->lb_point.y);
+	bool equal(const Polygon<T> &rhs) const {
+		auto r = dynamic_cast<const Rect<T>&>(rhs);
+		return this->id == rhs.id &&
+			(width == r.width && height == r.height || width == r.height && height == r.width);
 	}
 };
 
@@ -125,8 +137,8 @@ struct LShape : public Polygon<T> {
 	T hd, hm, hu; // hd=hm+hu
 	T vl, vm, vr; // vl=vm+vr
 
-	LShape(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
-		: Polygon<T>(id, points, segments) {
+	LShape(int id, const std::string &str, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
+		: Polygon<T>(id, str, points) {
 		std::vector<size_t> up_segs; up_segs.reserve(2);
 		std::vector<size_t> down_segs; down_segs.reserve(2);
 		std::vector<size_t> left_segs; left_segs.reserve(2);
@@ -225,51 +237,15 @@ struct LShape : public Polygon<T> {
 		else { assert(false); }
 
 		assert(hd == hu + hm && vl == vm + vr);
-		this->area = vl * hu + vr * hm;
 	}
 
 	Shape shape() { return Shape::L; }
 
-	void to_out_points() {
-		this->out_points.clear();
-		this->out_points.reserve(6);
-		switch (this->rotation) {
-		case Rotation::_0_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y + vl);
-			this->out_points.emplace_back(this->lb_point.x + hu, this->lb_point.y + vl);
-			this->out_points.emplace_back(this->lb_point.x + hu, this->lb_point.y + vr);
-			this->out_points.emplace_back(this->lb_point.x + hd, this->lb_point.y + vr);
-			this->out_points.emplace_back(this->lb_point.x + hd, this->lb_point.y);
-			break;
-		case Rotation::_90_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x + vl, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x + vl, this->lb_point.y - hu);
-			this->out_points.emplace_back(this->lb_point.x + vr, this->lb_point.y - hu);
-			this->out_points.emplace_back(this->lb_point.x + vr, this->lb_point.y - hd);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y - hd);
-			break;
-		case Rotation::_180_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y - vl);
-			this->out_points.emplace_back(this->lb_point.x - hu, this->lb_point.y - vl);
-			this->out_points.emplace_back(this->lb_point.x - hu, this->lb_point.y - vr);
-			this->out_points.emplace_back(this->lb_point.x - hd, this->lb_point.y - vr);
-			this->out_points.emplace_back(this->lb_point.x - hd, this->lb_point.y);
-			break;
-		case Rotation::_270_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x - vl, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x - vl, this->lb_point.y + hu);
-			this->out_points.emplace_back(this->lb_point.x - vr, this->lb_point.y + hu);
-			this->out_points.emplace_back(this->lb_point.x - vr, this->lb_point.y + hd);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y + hd);
-			break;
-		default:
-			assert(false);
-			break;
-		}
+	bool equal(const Polygon<T> &rhs) const {
+		auto r = dynamic_cast<const LShape<T>&>(rhs);
+		return this->id == rhs.id
+			&& hd == r.hd && hm == r.hm && hu == r.hu
+			&& vl == r.vl && vm == r.vm && vr == r.vr;
 	}
 };
 
@@ -278,8 +254,8 @@ struct TShape : public Polygon<T> {
 	T hu, hl, hr, hd; // hu+hl+hr=hd
 	T vlu, vld, vru, vrd; // vlu+vld=vru+vrd
 
-	TShape(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
-		: Polygon<T>(id, points, segments) {
+	TShape(int id, const std::string &str, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
+		: Polygon<T>(id, str, points) {
 		std::vector<size_t> up_segs; up_segs.reserve(3);
 		std::vector<size_t> down_segs; down_segs.reserve(3);
 		std::vector<size_t> left_segs; left_segs.reserve(3);
@@ -394,59 +370,15 @@ struct TShape : public Polygon<T> {
 		else { assert(false); }
 
 		assert(hu + hl + hr == hd && vlu + vld == vru + vrd);
-		this->area = hl * vld + hr * vrd + hu * (vru + vrd);
 	}
 
 	Shape shape() { return Shape::T; }
 
-	void to_out_points() {
-		this->out_points.clear();
-		this->out_points.reserve(8);
-		switch (this->rotation) {
-		case Rotation::_0_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y + vld);
-			this->out_points.emplace_back(this->lb_point.x + hl, this->lb_point.y + vld);
-			this->out_points.emplace_back(this->lb_point.x + hl, this->lb_point.y + vld + vlu);
-			this->out_points.emplace_back(this->lb_point.x + hl + hu, this->lb_point.y + vld + vlu);
-			this->out_points.emplace_back(this->lb_point.x + hl + hu, this->lb_point.y + vrd);
-			this->out_points.emplace_back(this->lb_point.x + hd, this->lb_point.y + vrd);
-			this->out_points.emplace_back(this->lb_point.x + hd, this->lb_point.y);
-			break;
-		case Rotation::_90_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x + vld, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x + vld, this->lb_point.y - hl);
-			this->out_points.emplace_back(this->lb_point.x + vld + vlu, this->lb_point.y - hl);
-			this->out_points.emplace_back(this->lb_point.x + vld + vlu, this->lb_point.y - hl - hu);
-			this->out_points.emplace_back(this->lb_point.x + vrd, this->lb_point.y - hl - hu);
-			this->out_points.emplace_back(this->lb_point.x + vrd, this->lb_point.y - hd);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y - hd);
-			break;
-		case Rotation::_180_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y - vld);
-			this->out_points.emplace_back(this->lb_point.x - hl, this->lb_point.y - vld);
-			this->out_points.emplace_back(this->lb_point.x - hl, this->lb_point.y - vld - vlu);
-			this->out_points.emplace_back(this->lb_point.x - hl - hu, this->lb_point.y - vld - vlu);
-			this->out_points.emplace_back(this->lb_point.x - hl - hu, this->lb_point.y - vrd);
-			this->out_points.emplace_back(this->lb_point.x - hd, this->lb_point.y - vrd);
-			this->out_points.emplace_back(this->lb_point.x - hd, this->lb_point.y);
-			break;
-		case Rotation::_270_:
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x - vld, this->lb_point.y);
-			this->out_points.emplace_back(this->lb_point.x - vld, this->lb_point.y + hl);
-			this->out_points.emplace_back(this->lb_point.x - vld - vlu, this->lb_point.y + hl);
-			this->out_points.emplace_back(this->lb_point.x - vld - vlu, this->lb_point.y + hl + hu);
-			this->out_points.emplace_back(this->lb_point.x - vrd, this->lb_point.y + hl + hu);
-			this->out_points.emplace_back(this->lb_point.x - vrd, this->lb_point.y + hd);
-			this->out_points.emplace_back(this->lb_point.x, this->lb_point.y + hd);
-			break;
-		default:
-			assert(false);
-			break;
-		}
+	bool equal(const Polygon<T> &rhs) const {
+		auto r = dynamic_cast<const TShape<T>&>(rhs);
+		return  this->id == rhs.id
+			&& hu == r.hu && hl == r.hl && hr == r.hr && hd == r.hd
+			&& vlu == r.vlu && vld == r.vld && vru == r.vru && vrd == r.vrd;
 	}
 };
 
@@ -455,8 +387,8 @@ struct Concave : public Polygon<T> {
 	T hu, hl, hr, hd; // hu+hl+hr=hd
 	T vlu, vld, vru, vrd; // vld-vlu=vrd-vru
 
-	Concave(int id, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
-		: Polygon<T>(id, points, segments) {
+	Concave(int id, const std::string &str, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments)
+		: Polygon<T>(id, str, points) {
 		std::vector<size_t> up_segs; up_segs.reserve(3);
 		std::vector<size_t> down_segs; down_segs.reserve(3);
 		std::vector<size_t> left_segs; left_segs.reserve(3);
@@ -571,30 +503,16 @@ struct Concave : public Polygon<T> {
 		else { assert(false); }
 
 		assert(hu + hl + hr == hd && vld - vlu == vrd - vru);
-		this->area = hl * vld + hr * vrd + hu * (vrd - vru);
 	}
 
 	Shape shape() { return Shape::C; }
 
-	void to_out_points() {
-		this->out_points.clear();
-		this->out_points.reserve(8);
-		assert(this->rotation == Rotation::_0_);
-		this->out_points.emplace_back(this->lb_point.x, this->lb_point.y);
-		this->out_points.emplace_back(this->lb_point.x, this->lb_point.y + vld);
-		this->out_points.emplace_back(this->lb_point.x + hl, this->lb_point.y + vld);
-		this->out_points.emplace_back(this->lb_point.x + hl, this->lb_point.y + vld - vlu);
-		this->out_points.emplace_back(this->lb_point.x + hl + hu, this->lb_point.y + vld - vlu);
-		this->out_points.emplace_back(this->lb_point.x + hl + hu, this->lb_point.y + vrd);
-		this->out_points.emplace_back(this->lb_point.x + hd, this->lb_point.y + vrd);
-		this->out_points.emplace_back(this->lb_point.x + hd, this->lb_point.y);
+	bool equal(const Polygon<T>& rhs) const {
+		auto r = dynamic_cast<const Concave<T>&>(rhs);
+		return  this->id == rhs.id
+			&& hu == r.hu && hl == r.hl && hr == r.hr && hd == r.hd
+			&& vlu == r.vlu && vld == r.vld && vru == r.vru && vrd == r.vrd;
 	}
-};
-
-template<typename T>
-struct SkyLineNode {
-	T x, y;
-	T width;
 };
 
 using point_t = Point<coord_t>;
@@ -621,8 +539,4 @@ using tshape_ptr = std::shared_ptr<tshape_t>;
 
 using concave_ptr = std::shared_ptr<concave_t>;
 
-using skylinenode_t = SkyLineNode<coord_t>;
-
-using skyline_t = std::vector<skylinenode_t>;
-
-#endif // SMARTMPW_DATA_HPP
+#endif // SMARTMPW_CHECKER_DATA_HPP

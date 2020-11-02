@@ -69,9 +69,10 @@ public:
 		for (auto &dst_node : _dst) {
 			sol_file << "In Polygon:" << endl;
 			for (auto &point : *dst_node->in_points) { sol_file << "(" << point.x << "," << point.y << ")"; }
+			dst_node->to_out_points();
 			sol_file << endl << "Out Polygon:" << endl;
-			vis::bg::for_each_point(dst_node->ring, [&](vis::bg_point_t &point) {
-				sol_file << "(" << point.x() << "," << point.y() << ")"; });
+			for_each(dst_node->out_points.begin(), dst_node->out_points.end(),
+				[&](point_t &point) { sol_file << "(" << point.x << "," << point.y << ")"; });
 			sol_file << endl;
 		}
 	}
@@ -83,8 +84,8 @@ public:
 		utils_visualize_drawer::Drawer html_drawer(_env.ins_html_path(), _cfg.ub_width, _cfg.ub_height);
 		for (auto &src_node : _ins.get_polygon_ptrs()) {
 			string polygon_str;
-			vis::bg::for_each_point(src_node->ring, [&](vis::bg_point_t &point) {
-				polygon_str += to_string(point.x()) + "," + to_string(point.y()) + " "; });
+			for_each(src_node->in_points->begin(), src_node->in_points->end(),
+				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
 			html_drawer.polygon(polygon_str);
 		}
 	}
@@ -93,8 +94,8 @@ public:
 		utils_visualize_drawer::Drawer html_drawer(html_path, _cfg.ub_width, _cfg.ub_height);
 		for (auto &dst_node : _dst) {
 			string polygon_str;
-			vis::bg::for_each_point(dst_node->ring, [&](vis::bg_point_t &point) {
-				polygon_str += to_string(point.x()) + "," + to_string(point.y()) + " "; });
+			for_each(dst_node->out_points.begin(), dst_node->out_points.end(),
+				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
 			html_drawer.polygon(polygon_str);
 		}
 	}

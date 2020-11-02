@@ -77,7 +77,7 @@ private:
 			vector<point_t> in_points;
 			while (ss >> l_bracket >> x >> comma >> y >> r_bracket) {
 				assert(l_bracket == '(' && comma == ',' && r_bracket == ')');
-				in_points.push_back({ x, y });
+				in_points.emplace_back(x, y);
 			}
 
 			vector<segment_t> in_segments = transform_points_to_segments(in_points);

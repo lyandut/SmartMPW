@@ -36,9 +36,6 @@
     <ClInclude Include="Utils.hpp">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Visualizer.hpp">
-      <Filter>Utils</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_1.txt">
