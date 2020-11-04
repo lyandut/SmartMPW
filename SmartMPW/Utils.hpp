@@ -24,7 +24,7 @@ namespace utils {
 			char mbstr[100];
 			strftime(mbstr, sizeof(mbstr), "%y%m%d", localtime(&now));
 			return mbstr;
-			
+
 			//ostringstream os;
 			//os << put_time(localtime(&now), "%y%m%d");
 			//return os.str();
@@ -35,7 +35,7 @@ namespace utils {
 			char mbstr[100];
 			strftime(mbstr, sizeof(mbstr), "%y%m%d%H%M%S", localtime(&now));
 			return mbstr;
-			
+
 			//ostringstream os;
 			//os << put_time(localtime(&now), "%y-%m-%e-%H_%M_%S");
 			//os << put_time(localtime(&now), "%y%m%d%H%M%S");
@@ -43,11 +43,13 @@ namespace utils {
 		}
 	};
 
-	static void split_filename(const string &str, string &path, string &file) {
+	static void split_filename(const string &str, string &dir, string &file, string &id) {
 		size_t found1 = str.find_last_of("/\\");
-		size_t found2 = str.find_last_of(".");
-		path = str.substr(0, found1 + 1);
-		file = str.substr(found1 + 1, found2 - found1 - 1);
+		size_t found2 = str.find_last_of("_");
+		size_t found3 = str.find_last_of(".");
+		dir = str.substr(0, found1 + 1);
+		file = str.substr(found1 + 1, found3 - found1 - 1);
+		id = found2 == string::npos ? string() : str.substr(found2, found3 - found2);
 	}
 }
 

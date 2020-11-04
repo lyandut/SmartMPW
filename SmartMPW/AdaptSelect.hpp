@@ -31,7 +31,8 @@ public:
 
 		_start = clock();
 
-		vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
+		//vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
+		vector<coord_t> candidate_widths = cal_candidate_widths_on_sqrt();
 
 		// 分支初始化iter=1
 		vector<CandidateWidth> cw_objs; cw_objs.reserve(candidate_widths.size());
@@ -53,7 +54,7 @@ public:
 
 		// 迭代优化
 		int curr_iter = 0; _iteration = 0;
-		while ((clock() - _start) / static_cast<double>(CLOCKS_PER_SEC) < _cfg.ub_asa_time
+		while (static_cast<double>(clock() - _start) / CLOCKS_PER_SEC < _cfg.ub_asa_time
 			&& curr_iter++ - _iteration < _cfg.ub_asa_iter) {
 			CandidateWidth &picked_width = cw_objs[discrete_dist(_gen)];
 			picked_width.iter = min(2 * picked_width.iter, _cfg.ub_rls_iter);
@@ -113,7 +114,7 @@ public:
 			<< _ins.get_total_area() << "," << _obj_area << "," << _fill_ratio << ","
 			<< _width << "," << _height << "," << _wh_ratio << ","
 			<< _iteration << "," << _duration << ","
-			<< (clock() - _start) / static_cast<double>(CLOCKS_PER_SEC) << "," << _cfg.random_seed << endl;
+			<< static_cast<double>(clock() - _start) / CLOCKS_PER_SEC << "," << _cfg.random_seed << endl;
 	}
 #endif // !SUBMIT
 
@@ -137,6 +138,22 @@ private:
 		return candidate_widths;
 	}
 
+	/// 开平方限制长宽比，同时剪枝提速
+	vector<coord_t> cal_candidate_widths_on_sqrt(coord_t interval = 1) {
+		vector<coord_t> candidate_widths;
+		coord_t max_width = min(coord_t(ceil(2.0 * sqrt(_ins.get_total_area()))), _cfg.ub_width);
+		coord_t min_width = max(coord_t(floor(0.8 * sqrt(_ins.get_total_area()))), _cfg.lb_width);
+		for_each(_ins.get_polygon_ptrs().begin(), _ins.get_polygon_ptrs().end(),
+			[&](const polygon_ptr &ptr) { min_width = max(min_width, ptr->max_length); });
+
+		candidate_widths.reserve(max_width - min_width + 1);
+		for (coord_t cw = min_width; cw <= max_width; cw += interval) {
+			if (cw * _cfg.ub_height < _ins.get_total_area()) { continue; }
+			candidate_widths.push_back(cw);
+		}
+		return candidate_widths;
+	}
+
 	/// 检查cw_obj的RLS结果
 	bool check_cwobj(const CandidateWidth &cw_obj) {
 		coord_t cw_height = cw_obj.mbp_solver->get_obj_area() / cw_obj.value;
@@ -151,9 +168,9 @@ private:
 			_fill_ratio = 1.0 * _ins.get_total_area() / _obj_area;
 			_width = cw_obj.value;
 			_height = cw_height;
-			_wh_ratio = 1.0 * _width / _height;
+			_wh_ratio = 1.0 * max(_width, _height) / min(_width, _height);
 			_dst = cw_obj.mbp_solver->get_dst();
-			_duration = (clock() - _start) / static_cast<double>(CLOCKS_PER_SEC);
+			_duration = static_cast<double>(clock() - _start) / CLOCKS_PER_SEC;
 			return true;
 		}
 		return false;

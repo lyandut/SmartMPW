@@ -17,7 +17,7 @@ using namespace std;
 
 class Environment {
 public:
-	Environment(const string &ins_str) : _ins_path(ins_str) { utils::split_filename(_ins_path, _ins_dir, _ins_name); }
+	Environment(const string &ins_str) : _ins_path(ins_str) { utils::split_filename(_ins_path, _ins_dir, _ins_name, _ins_id); }
 
 #ifndef SUBMIT
 public:
@@ -35,13 +35,14 @@ private:
 #else
 public:
 	string instance_path() const { return _ins_path; }
-	string solution_path() const { return "result.txt"; }
+	string solution_path() const { return "result" + _ins_id + ".txt"; }
 #endif // !SUBMIT
 
 private:
 	string _ins_path;
-	string _ins_name;
 	string _ins_dir;
+	string _ins_name;
+	string _ins_id;
 };
 
 class Instance {
