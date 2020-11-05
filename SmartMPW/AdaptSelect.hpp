@@ -78,6 +78,16 @@ public:
 		}
 	}
 
+	void draw_sol(const string &html_path) const {
+		utils_visualize_drawer::Drawer html_drawer(html_path, _cfg.ub_width, _cfg.ub_height);
+		for (auto &dst_node : _dst) {
+			string polygon_str;
+			for_each(dst_node->out_points.begin(), dst_node->out_points.end(),
+				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
+			html_drawer.polygon(polygon_str);
+		}
+	}
+
 #ifndef SUBMIT
 	void draw_ins() const {
 		ifstream ifs(_env.ins_html_path());
@@ -86,16 +96,6 @@ public:
 		for (auto &src_node : _ins.get_polygon_ptrs()) {
 			string polygon_str;
 			for_each(src_node->in_points->begin(), src_node->in_points->end(),
-				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
-			html_drawer.polygon(polygon_str);
-		}
-	}
-
-	void draw_sol(const string &html_path) const {
-		utils_visualize_drawer::Drawer html_drawer(html_path, _cfg.ub_width, _cfg.ub_height);
-		for (auto &dst_node : _dst) {
-			string polygon_str;
-			for_each(dst_node->out_points.begin(), dst_node->out_points.end(),
 				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
 			html_drawer.polygon(polygon_str);
 		}
@@ -142,7 +142,7 @@ private:
 	vector<coord_t> cal_candidate_widths_on_sqrt(coord_t interval = 1) {
 		vector<coord_t> candidate_widths;
 		coord_t max_width = min(coord_t(ceil(2.0 * sqrt(_ins.get_total_area()))), _cfg.ub_width);
-		coord_t min_width = max(coord_t(floor(0.8 * sqrt(_ins.get_total_area()))), _cfg.lb_width);
+		coord_t min_width = max(coord_t(floor(0.5 * sqrt(_ins.get_total_area()))), _cfg.lb_width);
 		for_each(_ins.get_polygon_ptrs().begin(), _ins.get_polygon_ptrs().end(),
 			[&](const polygon_ptr &ptr) { min_width = max(min_width, ptr->max_length); });
 

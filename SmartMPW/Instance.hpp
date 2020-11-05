@@ -36,6 +36,7 @@ private:
 public:
 	string instance_path() const { return _ins_path; }
 	string solution_path() const { return "result" + _ins_id + ".txt"; }
+	string sol_html_path() const { return "result" + _ins_id + ".html"; }
 #endif // !SUBMIT
 
 private:

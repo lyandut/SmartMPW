@@ -13,7 +13,7 @@
 
 #include <random>
 
-using coord_t = int;
+using coord_t = double;
 
 static constexpr int INF = 0x3f3f3f3f;
 
@@ -33,9 +33,9 @@ static const char *ins_list[]{
 struct Config {
 	unsigned int random_seed = std::random_device{}();
 	//unsigned int random_seed = 1196562269;
-	int ub_rls_iter = 9999;    // RLS最大迭代次数
-	int ub_asa_iter = 1000;    // ASA最大迭代次数
-	int ub_asa_time = 60 * 2;  // ASA超时时间
+	int ub_rls_iter = 9999; // RLS最大迭代次数
+	int ub_asa_iter = 1000; // ASA最大迭代次数
+	int ub_asa_time = 100;  // ASA超时时间
 
 	coord_t lb_width = 50, ub_width = 400;
 	coord_t lb_height = 50, ub_height = 300;
