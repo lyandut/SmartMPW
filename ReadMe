@@ -15,11 +15,11 @@ SmartMPW
 
 2. 编译选项说明
     -static-libstdc++         静态链接libstdc++防止动态库版本不匹配（必须）
-    -D__USE_XOPEN2K8    官方《编译指南》要求（必须）
+    -D__USE_XOPEN2K8          官方《编译指南》要求（必须）
     -DSUBMIT                  自定义宏，用于区分测试/提交版本（必须）
-    -DNDEBUG                 release版本关闭assert断言（必须）
-    -O2                            编译优化（可选）
-    -std=c++11               指定c++标准（必须）
+    -DNDEBUG                  release版本关闭assert断言（必须）
+    -O2                       编译优化（可选）
+    -std=c++11                指定c++标准（必须）
 
 
 3. 执行步骤
@@ -28,4 +28,6 @@ SmartMPW
 
 4. 注意事项
     输入文件命名必须符合要求，以_<id>.txt结尾。
-    输出结果会在placement.exe同级目录下生成result_<id>.txt。
+    输出文件会在placement.exe同级目录下生成result_<id>.txt。
+    Deploy/目录下包含算例的输入文件、输出文件、可视化文件等。
+    placement.exe是在服务器环境下编译的二进制文件。
