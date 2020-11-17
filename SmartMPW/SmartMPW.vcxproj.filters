@@ -68,6 +68,15 @@
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_5.txt">
       <Filter>资源文件</Filter>
     </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_11.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_12.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_13.txt">
+      <Filter>资源文件</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />

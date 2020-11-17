@@ -97,9 +97,6 @@
     <ClInclude Include="Data.hpp" />
     <ClInclude Include="Visualizer.hpp" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\Deploy\Solution\polygon_area_etc_input_1.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

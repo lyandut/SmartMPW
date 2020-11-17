@@ -27,7 +27,9 @@ static const char *ins_list[]{
 	"polygon_area_etc_input_7",
 	"polygon_area_etc_input_8",
 	"polygon_area_etc_input_9",
-	"polygon_area_etc_input_10"
+	"polygon_area_etc_input_10",
+	"polygon_area_etc_input_11",
+	"polygon_area_etc_input_12"
 };
 
 struct Config {

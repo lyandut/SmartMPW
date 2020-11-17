@@ -5,6 +5,8 @@
 #ifndef SMARTMPW_ADAPTSELECT_HPP
 #define SMARTMPW_ADAPTSELECT_HPP
 
+#include <future>
+
 #include "Instance.hpp"
 #include "MpwBinPack.hpp"
 
@@ -33,15 +35,36 @@ public:
 
 		//vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
 		vector<coord_t> candidate_widths = cal_candidate_widths_on_sqrt();
+		vector<CandidateWidth> cw_objs; cw_objs.reserve(candidate_widths.size());
 
 		// 分支初始化iter=1
-		vector<CandidateWidth> cw_objs; cw_objs.reserve(candidate_widths.size());
+		// 单线程
 		for (coord_t bin_width : candidate_widths) {
 			cw_objs.push_back({ bin_width, 1, unique_ptr<MpwBinPack>(
 				new MpwBinPack(_ins.get_polygon_ptrs(), bin_width, INF, _gen)) });
 			cw_objs.back().mbp_solver->random_local_search(1);
 			check_cwobj(cw_objs.back());
 		}
+		// 多线程 ==> thread
+		//vector<thread> threads; threads.reserve(candidate_widths.size());
+		//for (coord_t bin_width : candidate_widths) {
+		//	cw_objs.push_back({ bin_width, 1, unique_ptr<MpwBinPack>(
+		//		new MpwBinPack(_ins.get_polygon_ptrs(), bin_width, INF, _gen)) });
+		//	threads.emplace_back(&MpwBinPack::random_local_search, cw_objs.back().mbp_solver.get(), 1);
+		//	//threads.emplace_back([&]() { cw_objs.back().mbp_solver->random_local_search(1); });
+		//}
+		//for (auto &t : threads) { t.join(); }
+		//for (auto &cw_obj : cw_objs) { check_cwobj(cw_obj); }
+		// 多线程 ==> async
+		//vector<future<void>> futures; futures.reserve(candidate_widths.size());
+		//for (coord_t bin_width : candidate_widths) {
+		//	cw_objs.push_back({ bin_width, 1, unique_ptr<MpwBinPack>(
+		//		new MpwBinPack(_ins.get_polygon_ptrs(), bin_width, INF, _gen)) });
+		//	futures.push_back(async(&MpwBinPack::random_local_search, cw_objs.back().mbp_solver.get(), 1));
+		//	//futures.push_back(async([&]() { cw_objs.back().mbp_solver->random_local_search(1); }));
+		//}
+		//for (auto &f : futures) { f.wait(); }
+		//for (auto &cw_obj : cw_objs) { check_cwobj(cw_obj); }
 
 		// 降序排列，越后面的选中概率越大
 		sort(cw_objs.begin(), cw_objs.end(), [](const CandidateWidth &lhs, const CandidateWidth &rhs) {
@@ -96,7 +119,7 @@ public:
 		for (auto &src_node : _ins.get_polygon_ptrs()) {
 			string polygon_str;
 			for_each(src_node->in_points->begin(), src_node->in_points->end(),
-				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
+				[&](const point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
 			html_drawer.polygon(polygon_str);
 		}
 	}

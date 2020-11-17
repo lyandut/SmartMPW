@@ -100,6 +100,9 @@
   <ItemGroup>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_1.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_10.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_11.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_12.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_13.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_2.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_3.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_4.txt" />
