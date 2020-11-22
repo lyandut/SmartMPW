@@ -9,7 +9,7 @@
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 
-using coord_t = int;
+using coord_t = double;
 
 /// 基本数据结构定义
 namespace utils_visualize {

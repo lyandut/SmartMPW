@@ -54,7 +54,7 @@ public:
 
 	coord_t get_total_area() const { return _total_area; }
 
-	size_t get_polygon_num() const { return _polygon_num; }
+	int get_polygon_num() const { return _polygon_num; }
 
 	const vector<polygon_ptr>& get_polygon_ptrs()  const { return _polygon_ptrs; }
 
@@ -166,8 +166,8 @@ private:
 	list<tshape_t> _tshapes;
 	list<concave_t> _concaves;
 
-	size_t _polygon_num;
 	coord_t _total_area;
+	int _polygon_num;
 };
 
 #endif // SMARTMPW_INSTANCE_HPP
