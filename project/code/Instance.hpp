@@ -28,15 +28,17 @@ public:
 	string ins_html_path() const { return instance_dir() + _ins_name + ".html"; }
 	string sol_html_path() const { return solution_dir() + _ins_name + ".html"; }
 	string sol_html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
-	string log_path() const { return solution_dir() + "log.csv"; }
+	string log_path() const { return solution_dir() + "log.csv"; }	
 private:
 	static string instance_dir() { return "Instance/"; }
 	static string solution_dir() { return "Solution/"; }
 #else
 public:
-	string instance_path() const { return _ins_path; }
-	string solution_path() const { return "result" + _ins_id + ".txt"; }
-	string sol_html_path() const { return "result" + _ins_id + ".html"; }
+	const string& instance_path() const { return _ins_path; }
+	string solution_path() const { return solution_dir() + "result" + _ins_id + ".txt"; }
+private:
+	static string instance_dir() { return "/home/mpw/inputFiles/"; }
+	static string solution_dir() { return "/home/eda20315/project/verify_results/"; }
 #endif // !SUBMIT
 
 private:
@@ -52,7 +54,7 @@ public:
 
 	coord_t get_total_area() const { return _total_area; }
 
-	size_t get_polygon_num() const { return _polygon_num; }
+	int get_polygon_num() const { return _polygon_num; }
 
 	const vector<polygon_ptr>& get_polygon_ptrs()  const { return _polygon_ptrs; }
 
@@ -164,8 +166,8 @@ private:
 	list<tshape_t> _tshapes;
 	list<concave_t> _concaves;
 
-	size_t _polygon_num;
 	coord_t _total_area;
+	int _polygon_num;
 };
 
 #endif // SMARTMPW_INSTANCE_HPP

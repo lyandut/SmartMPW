@@ -1,0 +1,4 @@
+Length:56
+Width:86
+Area:4816
+Length/Width Ratio:1.53571

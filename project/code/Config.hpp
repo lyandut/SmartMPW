@@ -27,18 +27,22 @@ static const char *ins_list[]{
 	"polygon_area_etc_input_7",
 	"polygon_area_etc_input_8",
 	"polygon_area_etc_input_9",
-	"polygon_area_etc_input_10"
+	"polygon_area_etc_input_10",
+	"polygon_area_etc_input_11",
+	"polygon_area_etc_input_12",
+	"polygon_area_etc_input_13"
 };
 
 struct Config {
 	unsigned int random_seed = std::random_device{}();
 	//unsigned int random_seed = 1196562269;
 	int ub_rls_iter = 9999; // RLS最大迭代次数
-	int ub_asa_iter = 1000; // ASA最大迭代次数
-	int ub_asa_time = 100;  // ASA超时时间
+	int ub_asa_iter = 500;  // ASA最大迭代次数
+	int ub_asa_time = 300;  // ASA超时时间
 
 	coord_t lb_width = 50, ub_width = 400;
 	coord_t lb_height = 50, ub_height = 300;
+	double lb_scale = 0.8, ub_scale = 1.2;
 } cfg;
 
 #endif // SMARTMPW_CONFIG_HPP

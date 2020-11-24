@@ -1,0 +1,4 @@
+Length:50
+Width:50
+Area:2500
+Length/Width Ratio:1

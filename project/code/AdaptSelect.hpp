@@ -5,6 +5,8 @@
 #ifndef SMARTMPW_ADAPTSELECT_HPP
 #define SMARTMPW_ADAPTSELECT_HPP
 
+#include <future>
+
 #include "Instance.hpp"
 #include "MpwBinPack.hpp"
 
@@ -33,15 +35,26 @@ public:
 
 		//vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
 		vector<coord_t> candidate_widths = cal_candidate_widths_on_sqrt();
+		vector<CandidateWidth> cw_objs; cw_objs.reserve(candidate_widths.size());
 
 		// 分支初始化iter=1
-		vector<CandidateWidth> cw_objs; cw_objs.reserve(candidate_widths.size());
+		// 单线程
 		for (coord_t bin_width : candidate_widths) {
 			cw_objs.push_back({ bin_width, 1, unique_ptr<MpwBinPack>(
 				new MpwBinPack(_ins.get_polygon_ptrs(), bin_width, INF, _gen)) });
 			cw_objs.back().mbp_solver->random_local_search(1);
 			check_cwobj(cw_objs.back());
 		}
+		// 多线程 ==> async
+		//vector<future<void>> futures; futures.reserve(candidate_widths.size());
+		//for (coord_t bin_width : candidate_widths) {
+		//	cw_objs.push_back({ bin_width, 1, unique_ptr<MpwBinPack>(
+		//		new MpwBinPack(_ins.get_polygon_ptrs(), bin_width, INF, _gen)) });
+		//	futures.push_back(async(&MpwBinPack::random_local_search, cw_objs.back().mbp_solver.get(), 1));
+		//	//futures.push_back(async([&]() { cw_objs.back().mbp_solver->random_local_search(1); }));
+		//}
+		//for (auto &f : futures) { f.wait(); }
+		//for (auto &cw_obj : cw_objs) { check_cwobj(cw_obj); }
 
 		// 降序排列，越后面的选中概率越大
 		sort(cw_objs.begin(), cw_objs.end(), [](const CandidateWidth &lhs, const CandidateWidth &rhs) {
@@ -54,10 +67,11 @@ public:
 
 		// 迭代优化
 		int curr_iter = 0; _iteration = 0;
-		while (static_cast<double>(clock() - _start) / CLOCKS_PER_SEC < _cfg.ub_asa_time
+		while (static_cast<double>(clock() - _start) / CLOCKS_PER_SEC < min(_ins.get_polygon_num(), _cfg.ub_asa_time)
 			&& curr_iter++ - _iteration < _cfg.ub_asa_iter) {
 			CandidateWidth &picked_width = cw_objs[discrete_dist(_gen)];
-			picked_width.iter = min(2 * picked_width.iter, _cfg.ub_rls_iter);
+			picked_width.iter = min(4 * picked_width.iter, _cfg.ub_rls_iter);
+			picked_width.mbp_solver->set_bin_height(coord_t(floor(1.0 * _obj_area / picked_width.value)));
 			picked_width.mbp_solver->random_local_search(picked_width.iter);
 			_iteration = check_cwobj(picked_width) ? curr_iter : _iteration;
 			sort(cw_objs.begin(), cw_objs.end(), [](const CandidateWidth &lhs, const CandidateWidth &rhs) {
@@ -96,7 +110,7 @@ public:
 		for (auto &src_node : _ins.get_polygon_ptrs()) {
 			string polygon_str;
 			for_each(src_node->in_points->begin(), src_node->in_points->end(),
-				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
+				[&](const point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
 			html_drawer.polygon(polygon_str);
 		}
 	}
@@ -138,13 +152,13 @@ private:
 		return candidate_widths;
 	}
 
-	/// 开平方限制长宽比，同时剪枝提速
+	/// 开平方限制长宽比，削减分支数目
 	vector<coord_t> cal_candidate_widths_on_sqrt(coord_t interval = 1) {
 		vector<coord_t> candidate_widths;
-		coord_t max_width = min(coord_t(ceil(2.0 * sqrt(_ins.get_total_area()))), _cfg.ub_width);
-		coord_t min_width = max(coord_t(floor(0.5 * sqrt(_ins.get_total_area()))), _cfg.lb_width);
+		coord_t min_width = max(coord_t(floor(_cfg.lb_scale * sqrt(_ins.get_total_area()))), _cfg.lb_width);
 		for_each(_ins.get_polygon_ptrs().begin(), _ins.get_polygon_ptrs().end(),
 			[&](const polygon_ptr &ptr) { min_width = max(min_width, ptr->max_length); });
+		coord_t max_width = max(min(coord_t(ceil(_cfg.ub_scale * sqrt(_ins.get_total_area()))), _cfg.ub_width), min_width);
 
 		candidate_widths.reserve(max_width - min_width + 1);
 		for (coord_t cw = min_width; cw <= max_width; cw += interval) {

@@ -76,7 +76,7 @@ struct Segment {
 template<typename T>
 struct Polygon {
 	const int id;
-	const std::shared_ptr<std::vector<Point<T>>> in_points; // 输入坐标序列
+	const std::shared_ptr<const std::vector<Point<T>>> in_points; // 输入坐标序列
 	T area;
 	T max_length;
 	Point<T> lb_point; // 参考坐标（求解）
@@ -84,7 +84,7 @@ struct Polygon {
 	std::vector<Point<T>> out_points; // 输出坐标序列
 
 	Polygon(int id_, const std::vector<Point<T>> &points, const std::vector<Segment<T>> &segments) :
-		id(id_), in_points(std::make_shared<std::vector<Point<T>>>(points)),
+		id(id_), in_points(std::make_shared<const std::vector<Point<T>>>(points)),
 		lb_point(0, 0), rotation(Rotation::_0_),
 		max_length(max_element(segments.begin(), segments.end(),
 			[](const Segment<T> &lhs, const Segment<T> &rhs) { return lhs.len < rhs.len; })->len) {}
