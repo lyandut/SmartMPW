@@ -33,8 +33,8 @@ public:
 
 		_start = clock();
 
-		//vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
-		vector<coord_t> candidate_widths = cal_candidate_widths_on_sqrt();
+		vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
+		//vector<coord_t> candidate_widths = cal_candidate_widths_on_sqrt();
 		vector<CandidateWidth> cw_objs; cw_objs.reserve(candidate_widths.size());
 
 		// 分支初始化iter=1
@@ -67,13 +67,13 @@ public:
 
 		// 迭代优化
 		int curr_iter = 0; _iteration = 0;
-		while (static_cast<double>(clock() - _start) / CLOCKS_PER_SEC < min(_ins.get_polygon_num(), _cfg.ub_asa_time)
-			&& curr_iter++ - _iteration < _cfg.ub_asa_iter) {
+		while (static_cast<double>(clock() - _start) / CLOCKS_PER_SEC < _cfg.ub_asa_time) {
+			//&& curr_iter - _iteration < _cfg.ub_asa_iter) {
 			CandidateWidth &picked_width = cw_objs[discrete_dist(_gen)];
-			picked_width.iter = min(4 * picked_width.iter, _cfg.ub_rls_iter);
+			picked_width.iter = min(2 * picked_width.iter, _cfg.ub_rls_iter);
 			picked_width.mbp_solver->set_bin_height(coord_t(floor(1.0 * _obj_area / picked_width.value)));
 			picked_width.mbp_solver->random_local_search(picked_width.iter);
-			_iteration = check_cwobj(picked_width) ? curr_iter : _iteration;
+			check_cwobj(picked_width, ++curr_iter);
 			sort(cw_objs.begin(), cw_objs.end(), [](const CandidateWidth &lhs, const CandidateWidth &rhs) {
 				return lhs.mbp_solver->get_obj_area() > rhs.mbp_solver->get_obj_area(); });
 		}
@@ -97,7 +97,7 @@ public:
 		for (auto &dst_node : _dst) {
 			string polygon_str;
 			for_each(dst_node->out_points.begin(), dst_node->out_points.end(),
-				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
+				[&](point_t &point) { polygon_str += to_string(point.x*0.01) + "," + to_string(point.y*0.01) + " "; });
 			html_drawer.polygon(polygon_str);
 		}
 	}
@@ -141,12 +141,12 @@ private:
 			min_width = max(min_width, ptr->max_length);
 			max_width += ptr->max_length;
 		}
-		min_width = ceil(max(min_width, _cfg.lb_width));
-		max_width = ceil(min(max_width, _cfg.ub_width));
+		//min_width = ceil(max(min_width, _cfg.lb_width));
+		//max_width = ceil(min(max_width, _cfg.ub_width));
 
 		candidate_widths.reserve(max_width - min_width + 1);
 		for (coord_t cw = min_width; cw <= max_width; cw += interval) {
-			if (cw * _cfg.ub_height < _ins.get_total_area()) { continue; }
+			//if (cw * _cfg.ub_height < _ins.get_total_area()) { continue; }
 			candidate_widths.push_back(cw);
 		}
 		return candidate_widths;
@@ -155,28 +155,29 @@ private:
 	/// 开平方限制长宽比，削减分支数目
 	vector<coord_t> cal_candidate_widths_on_sqrt(coord_t interval = 1) {
 		vector<coord_t> candidate_widths;
-		coord_t min_width = max(coord_t(floor(_cfg.lb_scale * sqrt(_ins.get_total_area()))), _cfg.lb_width);
+		coord_t min_width = floor(_cfg.lb_scale * sqrt(_ins.get_total_area()));
+		coord_t max_width = ceil(_cfg.ub_scale * sqrt(_ins.get_total_area()));
 		for_each(_ins.get_polygon_ptrs().begin(), _ins.get_polygon_ptrs().end(),
 			[&](const polygon_ptr &ptr) { min_width = max(min_width, ptr->max_length); });
-		coord_t max_width = max(min(coord_t(ceil(_cfg.ub_scale * sqrt(_ins.get_total_area()))), _cfg.ub_width), min_width);
+		max_width = max(max_width, min_width);
 
 		candidate_widths.reserve(max_width - min_width + 1);
 		for (coord_t cw = min_width; cw <= max_width; cw += interval) {
-			if (cw * _cfg.ub_height < _ins.get_total_area()) { continue; }
+			//if (cw * _cfg.ub_height < _ins.get_total_area()) { continue; }
 			candidate_widths.push_back(cw);
 		}
 		return candidate_widths;
 	}
 
 	/// 检查cw_obj的RLS结果
-	bool check_cwobj(const CandidateWidth &cw_obj) {
+	void check_cwobj(const CandidateWidth &cw_obj, int curr_iter = 0) {
 		coord_t cw_height = cw_obj.mbp_solver->get_obj_area() / cw_obj.value;
-		if (cw_height > _cfg.ub_height) { // 解高度超出上界，不合法
-			cw_obj.mbp_solver->set_obj_area(numeric_limits<coord_t>::max());
-		}
-		if (cw_height < _cfg.lb_height) { // 解高度不足下界，按下界计算
-			cw_obj.mbp_solver->set_obj_area(cw_obj.value * _cfg.lb_height);
-		}
+		//if (cw_height > _cfg.ub_height) { // 解高度超出上界，不合法
+		//	cw_obj.mbp_solver->set_obj_area(numeric_limits<coord_t>::max());
+		//}
+		//if (cw_height < _cfg.lb_height) { // 解高度不足下界，按下界计算
+		//	cw_obj.mbp_solver->set_obj_area(cw_obj.value * _cfg.lb_height);
+		//}
 		if (cw_obj.mbp_solver->get_obj_area() < _obj_area) {
 			_obj_area = cw_obj.mbp_solver->get_obj_area();
 			_fill_ratio = 1.0 * _ins.get_total_area() / _obj_area;
@@ -185,9 +186,8 @@ private:
 			_wh_ratio = 1.0 * max(_width, _height) / min(_width, _height);
 			_dst = cw_obj.mbp_solver->get_dst();
 			_duration = static_cast<double>(clock() - _start) / CLOCKS_PER_SEC;
-			return true;
+			_iteration = curr_iter;
 		}
-		return false;
 	}
 
 private:

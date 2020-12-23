@@ -73,7 +73,7 @@ private:
 		_total_area = 0;
 		string line;
 		while (getline(ifs, line)) {
-			if (line == "Polygon:") { continue; }
+			if (line.front() != '(') { continue; }
 
 			stringstream ss(line);
 			char l_bracket, comma, r_bracket;

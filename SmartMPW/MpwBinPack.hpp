@@ -33,9 +33,9 @@ namespace mbp {
 			size_t tabu_key_hash() const { return hash<string>{}(tabu_key_str()); }
 		};
 
-		//using TabuTable = unordered_set<string>;
-		//using TabuFunc = string(SortRule::*)()const;
-		//TabuFunc tabu_key = &SortRule::tabu_key_str;
+		using TabuTable = unordered_set<string>;
+		using TabuFunc = string(SortRule::*)()const;
+		TabuFunc tabu_key = &SortRule::tabu_key_str;
 
 		//using TabuTable = unordered_set<size_t>;
 		//using TabuFunc = size_t(SortRule::*)()const;
@@ -90,8 +90,10 @@ namespace mbp {
 				SortRule new_rule = picked_rule;
 				if (iter % 4) { swap_sort_rule(new_rule); }
 				else { rotate_sort_rule(new_rule); }
+
 				//if (_tabu_table.count((new_rule.*tabu_key)())) { continue; } // 已禁忌
 				//_tabu_table.insert((new_rule.*tabu_key)());
+
 				_polygons.assign(new_rule.sequence.begin(), new_rule.sequence.end());
 				vector<polygon_ptr> target_dst;
 				if (!insert_bottom_left_score(target_dst)) { continue; } // 放不下
@@ -102,7 +104,7 @@ namespace mbp {
 					if (picked_rule.target_area < _obj_area) {
 						_obj_area = picked_rule.target_area;
 						_dst = target_dst;
-						_bin_height = target_height;
+						set_bin_height(target_height);
 					}
 				}
 			}
@@ -123,7 +125,7 @@ namespace mbp {
 				polygon_ptr best_dst_node;
 				size_t best_polygon_index;
 				coord_t best_skyline_height;
-				if (find_polygon_for_skyline_bottom_left(best_skyline_index, _polygons, best_dst_node, best_polygon_index, best_skyline_height)) {
+				if (find_polygon_for_skyline_bottom_left_all(best_skyline_index, _polygons, best_dst_node, best_polygon_index, best_skyline_height)) {
 					_polygons.remove(best_polygon_index);
 					dst.push_back(best_dst_node);
 					if (best_skyline_height > _bin_height) { return false; } // 超出_bin_height
@@ -188,7 +190,7 @@ namespace mbp {
 		}
 
 		/// 给最下最左的角选择最好的块
-		bool find_polygon_for_skyline_bottom_left(size_t skyline_index, const list<size_t> &polygons,
+		bool find_polygon_for_skyline_bottom_left_partial(size_t skyline_index, const list<size_t> &polygons,
 			polygon_ptr &best_dst_node, size_t &best_polygon_index, coord_t &best_skyline_height) {
 
 			int best_score = -1;
@@ -214,7 +216,8 @@ namespace mbp {
 				}
 				case Shape::L: {
 					auto lshape = dynamic_pointer_cast<lshape_t>(_src.at(p));
-					if (score_lshape_for_skyline_bottom_left(skyline_index, lshape, best_skyline_height)) {
+					coord_t waste; // no use
+					if (score_lshape_for_skyline_bottom_left(skyline_index, lshape, _skyline, best_skyline_height, waste)) {
 						best_polygon_index = p;
 						best_dst_node = make_shared<lshape_t>(*lshape);
 						return true; // _skyline已被更新
@@ -223,7 +226,7 @@ namespace mbp {
 				}
 				case Shape::T: {
 					auto tshape = dynamic_pointer_cast<tshape_t>(_src.at(p));
-					if (score_tshape_for_skyline_bottom_left(skyline_index, tshape, best_skyline_height)) {
+					if (score_tshape_for_skyline_bottom_left(skyline_index, tshape, _skyline, best_skyline_height)) {
 						best_polygon_index = p;
 						best_dst_node = make_shared<tshape_t>(*tshape);
 						return true; // _skyline已被更新
@@ -232,7 +235,7 @@ namespace mbp {
 				}
 				case Shape::C: {
 					auto concave = dynamic_pointer_cast<concave_t>(_src.at(p));
-					if (score_concave_for_skyline_bottom_left(skyline_index, concave, best_skyline_height)) {
+					if (score_concave_for_skyline_bottom_left(skyline_index, concave, _skyline, best_skyline_height)) {
 						best_polygon_index = p;
 						best_dst_node = make_shared<concave_t>(*concave);
 						return true; // _skyline已被更新
@@ -245,7 +248,7 @@ namespace mbp {
 
 			if (best_score == -1) { return false; }
 
-			// 运行到此处一定是矩形，更新_skyline
+			// 运行到此处一定是矩形，更新`_skyline`和`best_skyline_height`
 			assert(_src.at(best_polygon_index)->shape() == Shape::R);
 			auto rect = dynamic_pointer_cast<rect_t>(_src.at(best_polygon_index));
 			coord_t w = rect->width, h = rect->height;
@@ -264,6 +267,142 @@ namespace mbp {
 			}
 			best_skyline_height = new_skyline_node.y;
 			best_dst_node = make_shared<rect_t>(*rect);
+			return true;
+		}
+
+		/// 给最下最左的角选择最好的块
+		bool find_polygon_for_skyline_bottom_left_all(size_t skyline_index, const list<size_t> &polygons,
+			polygon_ptr &best_dst_node, size_t &best_polygon_index, coord_t &best_skyline_height) {
+
+			int best_rect_score = -1; // R使用打分策略
+			int best_ltc_delta = numeric_limits<int>::max(); // LTC使用skyline.size()变化量delta
+			coord_t best_l_waste = numeric_limits<coord_t>::max(); // L同时使用最小浪费
+
+			size_t best_rect_index, best_ltc_index;
+			skyline_t best_rect_skyline, best_ltc_skyline;
+			coord_t best_rect_height, best_ltc_height;
+
+			for (size_t p : polygons) {
+				switch (_src.at(p)->shape()) {
+				case Shape::R: {
+					auto rect = dynamic_pointer_cast<rect_t>(_src.at(p));
+					coord_t x; int rect_score;
+					for (int rotate = 0; rotate <= 1; ++rotate) {
+						coord_t w = rect->width, h = rect->height;
+						if (rotate) { swap(w, h); }
+						if (score_rect_for_skyline_bottom_left(skyline_index, w, h, x, rect_score)) {
+							if (best_rect_score < rect_score) {
+								best_rect_score = rect_score;
+								rect->lb_point.x = x;
+								rect->lb_point.y = _skyline[skyline_index].y;
+								rect->rotation = rotate ? Rotation::_90_ : Rotation::_0_;
+								best_rect_index = p;
+							}
+						}
+					}
+					break;
+				}
+				case Shape::L: {
+					auto lshape = dynamic_pointer_cast<lshape_t>(_src.at(p));
+					skyline_t score_skyline; coord_t score_height; coord_t score_waste;
+					if (score_lshape_for_skyline_bottom_left(skyline_index, lshape, score_skyline, score_height, score_waste)) {
+						if (best_l_waste > score_waste ||
+							best_l_waste == score_waste && best_ltc_delta > score_skyline.size() - _skyline.size()) {
+							best_l_waste = score_waste;
+							best_ltc_delta = score_skyline.size() - _skyline.size();
+							best_ltc_index = p;
+							best_ltc_skyline = score_skyline;
+							best_ltc_height = score_height;
+						}
+					}
+					break;
+				}
+				case Shape::T: {
+					auto tshape = dynamic_pointer_cast<tshape_t>(_src.at(p));
+					skyline_t score_skyline; coord_t score_height;
+					if (score_tshape_for_skyline_bottom_left(skyline_index, tshape, score_skyline, score_height)) {
+						if (best_ltc_delta > score_skyline.size() - _skyline.size()) {
+							best_ltc_delta = score_skyline.size() - _skyline.size();
+							best_ltc_index = p;
+							best_ltc_skyline = score_skyline;
+							best_ltc_height = score_height;
+						}
+					}
+					break;
+				}
+				case Shape::C: {
+					auto concave = dynamic_pointer_cast<concave_t>(_src.at(p));
+					skyline_t score_skyline; coord_t score_height;
+					if (score_concave_for_skyline_bottom_left(skyline_index, concave, score_skyline, score_height)) {
+						if (best_ltc_delta > score_skyline.size() - _skyline.size()) {
+							best_ltc_delta = score_skyline.size() - _skyline.size();
+							best_ltc_index = p;
+							best_ltc_skyline = score_skyline;
+							best_ltc_height = score_height;
+						}
+					}
+					break;
+				}
+				default: { assert(false); break; }
+				}
+			}
+
+			if (best_rect_score == -1) { // R放不下
+				if (best_ltc_delta == numeric_limits<int>::max())  // LTC放不下
+					return false;
+				else  // LTC能放下
+					best_polygon_index = best_ltc_index;
+			}
+			else { // R能放下，计算`best_rect_skyline`和`best_rect_height`
+				auto rect = dynamic_pointer_cast<rect_t>(_src.at(best_rect_index));
+				coord_t w = rect->width, h = rect->height;
+				if (rect->rotation == Rotation::_90_) { swap(w, h); }
+				best_rect_skyline = _skyline;
+				skylinenode_t new_skyline_node{ rect->lb_point.x, rect->lb_point.y + h, w };
+				if (rect->lb_point.x == best_rect_skyline[skyline_index].x) { // 靠左
+					best_rect_skyline.insert(best_rect_skyline.begin() + skyline_index, new_skyline_node);
+					best_rect_skyline[skyline_index + 1].x += w;
+					best_rect_skyline[skyline_index + 1].width -= w;
+					merge_skylines(best_rect_skyline);
+				}
+				else { // 靠右
+					best_rect_skyline.insert(best_rect_skyline.begin() + skyline_index + 1, new_skyline_node);
+					best_rect_skyline[skyline_index].width -= w;
+					merge_skylines(best_rect_skyline);
+				}
+				best_rect_height = new_skyline_node.y;
+
+				if (best_ltc_delta == numeric_limits<int>::max())  // LTC放不下
+					best_polygon_index = best_rect_index;
+				else // LTC能放下
+					best_polygon_index = _src.at(best_rect_index)->area > _src.at(best_ltc_index)->area ? best_rect_index : best_ltc_index;
+			}
+
+			switch (_src.at(best_polygon_index)->shape()) {
+			case Shape::R:
+				_skyline = best_rect_skyline;
+				best_skyline_height = best_rect_height;
+				best_dst_node = make_shared<rect_t>(*dynamic_pointer_cast<rect_t>(_src.at(best_polygon_index)));
+				break;
+			case Shape::L:
+				_skyline = best_ltc_skyline;
+				best_skyline_height = best_ltc_height;
+				best_dst_node = make_shared<lshape_t>(*dynamic_pointer_cast<lshape_t>(_src.at(best_polygon_index)));
+				break;
+			case Shape::T:
+				_skyline = best_ltc_skyline;
+				best_skyline_height = best_ltc_height;
+				best_dst_node = make_shared<tshape_t>(*dynamic_pointer_cast<tshape_t>(_src.at(best_polygon_index)));
+				break;
+			case Shape::C:
+				_skyline = best_ltc_skyline;
+				best_skyline_height = best_ltc_height;
+				best_dst_node = make_shared<concave_t>(*dynamic_pointer_cast<concave_t>(_src.at(best_polygon_index)));
+				break;
+			default:
+				assert(false);
+				break;
+			}
 			return true;
 		}
 
@@ -335,13 +474,14 @@ namespace mbp {
 		}
 
 		/// L打分策略
-		bool score_lshape_for_skyline_bottom_left(size_t skyline_index, lshape_ptr &lshape, coord_t &skyline_height) {
+		bool score_lshape_for_skyline_bottom_left(size_t skyline_index, lshape_ptr &lshape,
+			skyline_t &skyline, coord_t &skyline_height, coord_t &min_waste) {
 			SkylineSpace space = skyline_nodo_to_space(skyline_index);
 			skyline_t skyline_0l = _skyline, skyline_0r = _skyline,
 				skyline_90 = _skyline, skyline_180 = _skyline,
 				skyline_270l = _skyline, skyline_270r = _skyline;
-			size_t skyline_old_size = _skyline.size();
 			int min_delta = numeric_limits<int>::max();
+			min_waste = numeric_limits<coord_t>::max(); // 考虑浪费最小
 
 			if (lshape->hd <= space.width) { // 0&靠左
 				// lb_point
@@ -358,16 +498,16 @@ namespace mbp {
 					skyline_0l[skyline_index + 1].x + skyline_0l[skyline_index + 1].width,
 					skyline_0l[skyline_index + 1].y - lshape->vr,
 					space.width - lshape->hd });
-				// skyline_height
-				skyline_height = skyline_0l[skyline_index].y;
 				// merge
 				merge_skylines(skyline_0l);
 				// delta
-				if (min_delta > skyline_0l.size() - skyline_old_size) {
-					min_delta = skyline_0l.size() - skyline_old_size;
+				if (min_delta > skyline_0l.size() - _skyline.size()) {
+					min_delta = skyline_0l.size() - _skyline.size();
+					min_waste = 0;
 					lshape->rotation = Rotation::_0_;
 					lshape->lb_point = lb_point_0l;
-					_skyline = skyline_0l;
+					skyline = skyline_0l;
+					skyline_height = skyline_0l[skyline_index].y;
 				}
 			}
 
@@ -385,75 +525,16 @@ namespace mbp {
 					skyline_0r[skyline_index + 1].x + skyline_0r[skyline_index + 1].width,
 					skyline_0r[skyline_index + 1].y - lshape->vm,
 					lshape->hm });
-				// skyline_height
-				skyline_height = skyline_0r[skyline_index + 1].y;
 				// merge
 				merge_skylines(skyline_0r);
 				// delta
-				if (min_delta > skyline_0r.size() - skyline_old_size) {
-					min_delta = skyline_0r.size() - skyline_old_size;
+				if (min_delta > skyline_0r.size() - _skyline.size()) {
+					min_delta = skyline_0r.size() - _skyline.size();
+					min_waste = 0;
 					lshape->rotation = Rotation::_0_;
 					lshape->lb_point = lb_point_0r;
-					_skyline = skyline_0r;
-				}
-			}
-
-			if (skyline_index + 1 < skyline_90.size()
-				&& lshape->vm <= skyline_90[skyline_index + 1].width
-				&& lshape->hm == space.hr
-				&& lshape->vr <= space.width) {
-				// lb_point
-				point_t lb_point_90 = { skyline_90[skyline_index].x + space.width - lshape->vr, skyline_90[skyline_index].y + lshape->hd };
-				// update
-				skyline_90[skyline_index].width -= lshape->vr;
-				// add
-				skyline_90.insert(skyline_90.begin() + skyline_index + 1, {
-					skyline_90[skyline_index].x + skyline_90[skyline_index].width,
-					skyline_90[skyline_index].y + lshape->hd,
-					lshape->vl });
-				// delete right
-				skyline_90[skyline_index + 2].x += lshape->vm;
-				skyline_90[skyline_index + 2].width -= lshape->vm;
-				// skyline_height
-				skyline_height = skyline_90[skyline_index + 1].y;
-				// merge
-				merge_skylines(skyline_90);
-				// delta
-				if (min_delta > skyline_90.size() - skyline_old_size) {
-					min_delta = skyline_90.size() - skyline_old_size;
-					lshape->rotation = Rotation::_90_;
-					lshape->lb_point = lb_point_90;
-					_skyline = skyline_90;
-				}
-			}
-
-			if (skyline_index >= 1
-				&& lshape->hm <= skyline_180[skyline_index - 1].width
-				&& lshape->vm == space.hl
-				&& lshape->hu <= space.width) {
-				// lb_point
-				point_t lb_point_180 = { skyline_180[skyline_index].x + lshape->hu, skyline_180[skyline_index].y + lshape->vl };
-				// update
-				skyline_180[skyline_index].x -= lshape->hm;
-				skyline_180[skyline_index].y += lshape->vl;
-				skyline_180[skyline_index].width = lshape->hd;
-				// add
-				skyline_180.insert(skyline_180.begin() + skyline_index + 1, {
-					skyline_180[skyline_index].x + skyline_180[skyline_index].width,
-					skyline_180[skyline_index].y - lshape->vl,
-					space.width - lshape->hu });
-				// delete left
-				skyline_180[skyline_index - 1].width -= lshape->hm;
-				// skyline_height
-				skyline_height = skyline_180[skyline_index].y;
-				// merge
-				merge_skylines(skyline_180);
-				// delta
-				if (min_delta > skyline_180.size() - skyline_old_size) {
-					min_delta = skyline_180.size() - skyline_old_size;
-					lshape->rotation = Rotation::_180_;
-					lshape->lb_point = lb_point_180;
-					_skyline = skyline_180;
+					skyline = skyline_0r;
+					skyline_height = skyline_0r[skyline_index + 1].y;
 				}
 			}
 
@@ -472,16 +553,16 @@ namespace mbp {
 					skyline_270l[skyline_index + 1].x + skyline_270l[skyline_index + 1].width,
 					skyline_270l[skyline_index + 1].y - lshape->hd,
 					space.width - lshape->vl });
-				// skyline_height
-				skyline_height = skyline_270l[skyline_index + 1].y;
 				// merge
 				merge_skylines(skyline_270l);
 				// delta
-				if (min_delta > skyline_270l.size() - skyline_old_size) {
-					min_delta = skyline_270l.size() - skyline_old_size;
+				if (min_delta > skyline_270l.size() - _skyline.size()) {
+					min_delta = skyline_270l.size() - _skyline.size();
+					min_waste = 0;
 					lshape->rotation = Rotation::_270_;
 					lshape->lb_point = lb_point_270l;
-					_skyline = skyline_270l;
+					skyline = skyline_270l;
+					skyline_height = skyline_270l[skyline_index + 1].y;
 				}
 			}
 
@@ -499,16 +580,91 @@ namespace mbp {
 					skyline_270r[skyline_index + 1].x + skyline_270r[skyline_index + 1].width,
 					skyline_270r[skyline_index + 1].y + lshape->hm,
 					lshape->vr });
-				// skyline_height
-				skyline_height = skyline_270r[skyline_index + 2].y;
 				// merge
 				merge_skylines(skyline_270r);
 				// delta
-				if (min_delta > skyline_270r.size() - skyline_old_size) {
-					min_delta = skyline_270r.size() - skyline_old_size;
+				if (min_delta > skyline_270r.size() - _skyline.size()) {
+					min_delta = skyline_270r.size() - _skyline.size();
+					min_waste = 0;
 					lshape->rotation = Rotation::_270_;
 					lshape->lb_point = lb_point_270r;
-					_skyline = skyline_270r;
+					skyline = skyline_270r;
+					skyline_height = skyline_270r[skyline_index + 2].y;
+				}
+			}
+
+			if (skyline_index + 1 < skyline_90.size()
+				&& lshape->vm <= skyline_90[skyline_index + 1].width
+				//&& lshape->hm == space.hr // 注释：允许浪费
+				&& lshape->vr <= space.width) {
+				coord_t new_skyline_height = max(lshape->hd, lshape->hu + space.hr);
+				// lb_point
+				point_t lb_point_90 = { skyline_90[skyline_index].x + space.width - lshape->vr, skyline_90[skyline_index].y + new_skyline_height };
+				// update
+				skyline_90[skyline_index].width -= lshape->vr;
+				// add
+				skyline_90.insert(skyline_90.begin() + skyline_index + 1, {
+					skyline_90[skyline_index].x + skyline_90[skyline_index].width,
+					skyline_90[skyline_index].y + new_skyline_height,
+					lshape->vl });
+				// delete right
+				skyline_90[skyline_index + 2].x += lshape->vm;
+				skyline_90[skyline_index + 2].width -= lshape->vm;
+				// merge
+				merge_skylines(skyline_90);
+				// waste
+				//coord_t old_space = min(space.hl, space.hr) * space.width;
+				//coord_t new_space = min(space.hl, new_skyline_height) * skyline_90[skyline_index].width;
+				coord_t waste_90 = lshape->hd > lshape->hu + space.hr ?
+					(lshape->hd - lshape->hu - space.hr) * lshape->vm : // 上方浪费
+					(lshape->hu + space.hr - lshape->hd) * lshape->vr;  // 下方浪费
+				// delta
+				if (min_waste > waste_90 ||
+					min_waste == waste_90 && min_delta > skyline_90.size() - _skyline.size()) {
+					min_waste = waste_90;
+					min_delta = skyline_90.size() - _skyline.size();
+					lshape->rotation = Rotation::_90_;
+					lshape->lb_point = lb_point_90;
+					skyline = skyline_90;
+					skyline_height = skyline_90[skyline_index + 1].y;
+				}
+			}
+
+			if (skyline_index >= 1
+				&& lshape->hm <= skyline_180[skyline_index - 1].width
+				//&& lshape->vm == space.hl // 注释：允许浪费
+				&& lshape->hu <= space.width) {
+				coord_t new_skyline_height = max(lshape->vl, lshape->vr + space.hl);
+				// lb_point
+				point_t lb_point_180 = { skyline_180[skyline_index].x + lshape->hu, skyline_180[skyline_index].y + new_skyline_height };
+				// update
+				skyline_180[skyline_index].x -= lshape->hm;
+				skyline_180[skyline_index].y += new_skyline_height;
+				skyline_180[skyline_index].width = lshape->hd;
+				// add
+				skyline_180.insert(skyline_180.begin() + skyline_index + 1, {
+					skyline_180[skyline_index].x + skyline_180[skyline_index].width,
+					skyline_180[skyline_index].y - new_skyline_height,
+					space.width - lshape->hu });
+				// delete left
+				skyline_180[skyline_index - 1].width -= lshape->hm;
+				// merge
+				merge_skylines(skyline_180);
+				// waste
+				//coord_t old_space = min(space.hl, space.hr) * space.width;
+				//coord_t new_space = min(space.hr, new_skyline_height) * skyline_180[skyline_index + 1].width;
+				coord_t waste_180 = lshape->vl > lshape->vr + space.hl ?
+					(lshape->vl - lshape->vr - space.hl) * lshape->hm :
+					(lshape->vr + space.hl - lshape->vl) * lshape->hu;
+				// delta
+				if (min_waste > waste_180 ||
+					min_waste == waste_180 && min_delta > skyline_180.size() - _skyline.size()) {
+					min_waste = waste_180;
+					min_delta = skyline_180.size() - _skyline.size();
+					lshape->rotation = Rotation::_180_;
+					lshape->lb_point = lb_point_180;
+					skyline = skyline_180;
+					skyline_height = skyline_180[skyline_index].y;
 				}
 			}
 
@@ -517,11 +673,10 @@ namespace mbp {
 		}
 
 		/// T打分策略
-		bool score_tshape_for_skyline_bottom_left(size_t skyline_index, tshape_ptr &tshape, coord_t &skyline_height) {
+		bool score_tshape_for_skyline_bottom_left(size_t skyline_index, tshape_ptr &tshape, skyline_t &skyline, coord_t &skyline_height) {
 			SkylineSpace space = skyline_nodo_to_space(skyline_index);
 			skyline_t skyline_0l = _skyline, skyline_0r = _skyline,
 				skyline_90 = _skyline, skyline_180 = _skyline, skyline_270 = _skyline;
-			size_t skyline_old_size = _skyline.size();
 			int min_delta = numeric_limits<int>::max();
 
 			if (tshape->hd <= space.width) { // 0&靠左
@@ -543,16 +698,15 @@ namespace mbp {
 					skyline_0l[skyline_index + 2].x + skyline_0l[skyline_index + 2].width,
 					skyline_0l[skyline_index + 2].y - tshape->vrd,
 					space.width - tshape->hd });
-				// skyline_height
-				skyline_height = skyline_0l[skyline_index + 1].y;
 				// merge
 				merge_skylines(skyline_0l);
 				// delta
-				if (min_delta > skyline_0l.size() - skyline_old_size) {
-					min_delta = skyline_0l.size() - skyline_old_size;
+				if (min_delta > skyline_0l.size() - _skyline.size()) {
+					min_delta = skyline_0l.size() - _skyline.size();
 					tshape->rotation = Rotation::_0_;
 					tshape->lb_point = lb_point_0l;
-					_skyline = skyline_0l;
+					skyline = skyline_0l;
+					skyline_height = skyline_0l[skyline_index + 1].y;
 				}
 			}
 
@@ -574,16 +728,15 @@ namespace mbp {
 					skyline_0r[skyline_index + 2].x + skyline_0r[skyline_index + 2].width,
 					skyline_0r[skyline_index + 2].y - tshape->vru,
 					tshape->hr });
-				// skyline_height
-				skyline_height = skyline_0r[skyline_index + 2].y;
 				// merge
 				merge_skylines(skyline_0r);
 				// delta
-				if (min_delta > skyline_0r.size() - skyline_old_size) {
-					min_delta = skyline_0r.size() - skyline_old_size;
+				if (min_delta > skyline_0r.size() - _skyline.size()) {
+					min_delta = skyline_0r.size() - _skyline.size();
 					tshape->rotation = Rotation::_0_;
 					tshape->lb_point = lb_point_0r;
-					_skyline = skyline_0r;
+					skyline = skyline_0r;
+					skyline_height = skyline_0r[skyline_index + 2].y;
 				}
 			}
 
@@ -607,16 +760,15 @@ namespace mbp {
 				// delete right
 				skyline_90[skyline_index + 3].x += tshape->vru;
 				skyline_90[skyline_index + 3].width -= tshape->vru;
-				// skyline_height
-				skyline_height = skyline_90[skyline_index + 1].y;
 				// merge
 				merge_skylines(skyline_90);
 				// delta
-				if (min_delta > skyline_90.size() - skyline_old_size) {
-					min_delta = skyline_90.size() - skyline_old_size;
+				if (min_delta > skyline_90.size() - _skyline.size()) {
+					min_delta = skyline_90.size() - _skyline.size();
 					tshape->rotation = Rotation::_90_;
 					tshape->lb_point = lb_point_90;
-					_skyline = skyline_90;
+					skyline = skyline_90;
+					skyline_height = skyline_90[skyline_index + 1].y;
 				}
 			}
 
@@ -637,16 +789,15 @@ namespace mbp {
 				// delete right
 				skyline_180[skyline_index + 1].x += tshape->hl;
 				skyline_180[skyline_index + 1].width -= tshape->hl;
-				// skyline_height
-				skyline_height = skyline_180[skyline_index].y;
 				// merge
 				merge_skylines(skyline_180);
 				// delta
-				if (min_delta > skyline_180.size() - skyline_old_size) {
-					min_delta = skyline_180.size() - skyline_old_size;
+				if (min_delta > skyline_180.size() - _skyline.size()) {
+					min_delta = skyline_180.size() - _skyline.size();
 					tshape->rotation = Rotation::_180_;
 					tshape->lb_point = lb_point_180;
-					_skyline = skyline_180;
+					skyline = skyline_180;
+					skyline_height = skyline_180[skyline_index].y;
 				}
 			}
 
@@ -671,16 +822,15 @@ namespace mbp {
 					space.width - tshape->vld });
 				// delete left
 				skyline_270[skyline_index - 1].width -= tshape->vlu;
-				// skyline_height
-				skyline_height = skyline_270[skyline_index + 1].y;
 				// merge
 				merge_skylines(skyline_270);
 				// delta
-				if (min_delta > skyline_270.size() - skyline_old_size) {
-					min_delta = skyline_270.size() - skyline_old_size;
+				if (min_delta > skyline_270.size() - _skyline.size()) {
+					min_delta = skyline_270.size() - _skyline.size();
 					tshape->rotation = Rotation::_270_;
 					tshape->lb_point = lb_point_270;
-					_skyline = skyline_270;
+					skyline = skyline_270;
+					skyline_height = skyline_270[skyline_index + 1].y;
 				}
 			}
 
@@ -689,10 +839,9 @@ namespace mbp {
 		}
 
 		/// C打分策略
-		bool score_concave_for_skyline_bottom_left(size_t skyline_index, concave_ptr &concave, coord_t &skyline_height) {
+		bool score_concave_for_skyline_bottom_left(size_t skyline_index, concave_ptr &concave, skyline_t &skyline, coord_t &skyline_height) {
 			SkylineSpace space = skyline_nodo_to_space(skyline_index);
 			skyline_t skyline_0l = _skyline, skyline_0r = _skyline;
-			size_t skyline_old_size = _skyline.size();
 			int min_delta = numeric_limits<int>::max();
 
 			if (concave->hd <= space.width) { // 0&靠左
@@ -714,16 +863,15 @@ namespace mbp {
 					skyline_0l[skyline_index + 2].x + skyline_0l[skyline_index + 2].width,
 					skyline_0l[skyline_index + 2].y - concave->vrd,
 					space.width - concave->hd });
-				// skyline_height
-				skyline_height = max(skyline_0l[skyline_index].y, skyline_0l[skyline_index + 2].y);
 				// merge
 				merge_skylines(skyline_0l);
 				// delta
-				if (min_delta > skyline_0l.size() - skyline_old_size) {
-					min_delta = skyline_0l.size() - skyline_old_size;
+				if (min_delta > skyline_0l.size() - _skyline.size()) {
+					min_delta = skyline_0l.size() - _skyline.size();
 					concave->rotation = Rotation::_0_;
 					concave->lb_point = lb_point_0l;
-					_skyline = skyline_0l;
+					skyline = skyline_0l;
+					skyline_height = max(skyline_0l[skyline_index].y, skyline_0l[skyline_index + 2].y);
 				}
 			}
 
@@ -745,16 +893,15 @@ namespace mbp {
 					skyline_0r[skyline_index + 2].x + skyline_0r[skyline_index + 2].width,
 					skyline_0r[skyline_index + 2].y + concave->vru,
 					concave->hr });
-				// skyline_height
-				skyline_height = max(skyline_0r[skyline_index + 1].y, skyline_0r[skyline_index + 3].y);
 				// merge
 				merge_skylines(skyline_0r);
 				// delta
-				if (min_delta > skyline_0r.size() - skyline_old_size) {
-					min_delta = skyline_0r.size() - skyline_old_size;
+				if (min_delta > skyline_0r.size() - _skyline.size()) {
+					min_delta = skyline_0r.size() - _skyline.size();
 					concave->rotation = Rotation::_0_;
 					concave->lb_point = lb_point_0r;
-					_skyline = skyline_0r;
+					skyline = skyline_0r;
+					skyline_height = max(skyline_0r[skyline_index + 1].y, skyline_0r[skyline_index + 3].y);
 				}
 			}
 

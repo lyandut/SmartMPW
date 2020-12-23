@@ -16,6 +16,12 @@
     <Filter Include="Algorithm">
       <UniqueIdentifier>{fa9339ae-7012-4480-9a11-cf3faa25abb1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="资源文件\icisc">
+      <UniqueIdentifier>{7e9affc1-21ea-4d96-96ce-12993c4f4435}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="资源文件\mcnc">
+      <UniqueIdentifier>{967289eb-3305-47a3-b6c0-9599f7acde4a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdaptSelect.hpp">
@@ -38,47 +44,50 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_1.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_6.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_7.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_8.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_9.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_10.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_2.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_3.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_4.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_5.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_11.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_12.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_13.txt">
-      <Filter>资源文件</Filter>
-    </Text>
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <Text Include="..\Deploy\Instance\ami33_lt_Ma.txt">
+      <Filter>资源文件\mcnc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\ami49_lt_Xu_1.txt">
+      <Filter>资源文件\mcnc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\ami49_lt_Xu_2.txt">
+      <Filter>资源文件\mcnc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_1.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_2.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_3.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_4.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_5.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_6.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_7.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_8.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_9.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_10.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_55.txt">
+      <Filter>资源文件\icisc</Filter>
+    </Text>
   </ItemGroup>
 </Project>

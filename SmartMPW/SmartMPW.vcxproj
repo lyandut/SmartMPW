@@ -104,22 +104,23 @@
     <ClInclude Include="Utils.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Deploy\Instance\ami33_lt_Ma.txt" />
+    <Text Include="..\Deploy\Instance\ami49_lt_Xu_1.txt" />
+    <Text Include="..\Deploy\Instance\ami49_lt_Xu_2.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_1.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_10.txt" />
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_11.txt" />
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_12.txt" />
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_13.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_2.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_3.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_4.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_5.txt" />
+    <Text Include="..\Deploy\Instance\polygon_area_etc_input_55.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_6.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_7.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_8.txt" />
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_9.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

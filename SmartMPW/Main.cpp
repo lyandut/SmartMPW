@@ -28,16 +28,18 @@ void run_all_instances() {
 
 int main(int argc, char* argv[]) {
 
-	if (argc != 2) {
-		cerr << "Error parameter. See 'placement.exe /xxx/xxx/input_<id>.txt'." << endl;
-	}
-	else if (strcmp(argv[1], "--all") == 0) {
-		cout << "Run all instances..." << endl;
-		run_all_instances();
-	}
-	else {
-		run_single_instance(argv[1]);
-	}
+	//if (argc != 2) {
+	//	cerr << "Error parameter. See 'placement.exe /xxx/xxx/input_<id>.txt'." << endl;
+	//}
+	//else if (strcmp(argv[1], "--all") == 0) {
+	//	cout << "Run all instances..." << endl;
+	//	run_all_instances();
+	//}
+	//else {
+	//	run_single_instance(argv[1]);
+	//}
+
+	run_all_instances();
 
 	return 0;
 }
