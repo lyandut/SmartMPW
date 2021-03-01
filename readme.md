@@ -6,24 +6,28 @@
 
 赛题三：**智能 MPW 拼接**
 
-## 编译
+## 问题描述
 
-- Win + VS2017
-  - just open `SmartMPW.sln`.
-- Win + MinGW64 8.1.0
-  - `g++ *.hpp *.cpp -O2 -std=c++11 -o placement.exe`
-- Linux + GCC 4.8.2（官方提供的服务器环境，提交版本）
-  - `csh`
-  - `source /home/mpw/makesetup.csh`
-  - `g++ *.hpp *.cpp -D__USE_XOPEN2K8 -DSUBMIT -DNDEBUG -O2 -std=c++11 -o placement.exe`
-    - `-static-libstdc++` 静态链接libstdc++防止动态库版本不匹配，出现 `GLIBCXX_3.4.18` not found 错误时需要指定
-    - `-D__USE_XOPEN2K8` 官方《编译指南》要求（必须）
-    - `-DSUBMIT` 自定义宏，用于区分测试/提交版本（必须）
-    - `-DNDEBUG` release版本关闭assert断言（必须）
-    - `-O2` 编译优化（可选）
-    - `-std=c++11` 指定c++标准（必须）
+输入 N 个不同形状和尺寸的多边形（相当于版图边界外形)，多边形为矩形或边均为正交方向的多边形（L字形、T字形、凹字形），要求输出各个多边形的最终摆放位置。目标函数为最小化拼接形成的包络矩形的面积，在面积相同的情况下，长宽比越接近 1 : 1 的矩形更优。
 
-## 运行
+拼接规则为：
 
-- `placement.exe /xxx/xxx/input_<id>.txt`（开启`-DSUBMIT`）
-- `placement.exe --all`（关闭`-DSUBMIT`关闭，`Instance/`，`Solution/`，`placement.exe`位于同一目录下）
+- 不允许重叠；
+- 允许做基本的几何旋转；
+- 拼接成的包络矩形需要满足长宽在一定范围内，如50um≤宽≤300um，50um≤长≤400um。
+
+## 两层搜索框架
+
+上层：**自适应选择搜索（ASA，Adaptive selection approach）** 的目标在于找到一个有潜力的包络矩形长度；
+
+下层：**随机局部搜索（RLS，Random local search）** 则是为了找到一个合理的放置顺序。
+
+<img src="img/asa.png" alt="asa" style="zoom: 50%;" /> <img src="img/randomlocalsearch.png" alt="random local search" style="zoom:50%;" />
+
+## 算例求解情况
+
+详见 [BestResult](Deploy/BestResult.md)。
+
+## 排版效果展示
+
+![vis](img/vis.gif)

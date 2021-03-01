@@ -4,6 +4,7 @@
 Deploy/*
 !Deploy/Instance/
 !Deploy/Solution/
+!Deploy/BestResult.md
 
 # User-specific files
 *.suo
