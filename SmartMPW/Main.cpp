@@ -4,7 +4,7 @@
 #include <cstring>
 #include "AdaptSelect.hpp"
 
-void run_single_instance(const string &ins_str) {
+void run_single_instance(const string& ins_str) {
 	Environment env(ins_str);
 	AdaptSelect asa(env, cfg);
 	asa.run();
@@ -20,7 +20,7 @@ void run_single_instance(const string &ins_str) {
 }
 
 void run_all_instances() {
-	for (auto &ins : ins_list) {
+	for (auto& ins : ins_list) {
 		cout << "load instance " << ins << endl;
 		run_single_instance(ins);
 	}
@@ -28,18 +28,16 @@ void run_all_instances() {
 
 int main(int argc, char* argv[]) {
 
-	//if (argc != 2) {
-	//	cerr << "Error parameter. See 'placement.exe /xxx/xxx/input_<id>.txt'." << endl;
-	//}
-	//else if (strcmp(argv[1], "--all") == 0) {
-	//	cout << "Run all instances..." << endl;
-	//	run_all_instances();
-	//}
-	//else {
-	//	run_single_instance(argv[1]);
-	//}
-
-	run_all_instances();
+	if (argc != 2) {
+		cerr << "Error parameter. See 'placement.exe /xxx/xxx/input_<id>.txt'." << endl;
+	}
+	else if (strcmp(argv[1], "--all") == 0) {
+		cout << "Run all instances..." << endl;
+		run_all_instances();
+	}
+	else {
+		run_single_instance(argv[1]);
+	}
 
 	return 0;
 }
