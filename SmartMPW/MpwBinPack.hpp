@@ -151,8 +151,8 @@ namespace mbp {
 			// 0_输入顺序
 			vector<size_t> seq(_src.size());
 			iota(seq.begin(), seq.end(), 0);
-			_sort_rules.reserve(4);
-			for (size_t i = 0; i < 4; ++i) { _sort_rules.push_back({ seq, numeric_limits<coord_t>::max() }); }
+			_sort_rules.reserve(5);
+			for (size_t i = 0; i < 5; ++i) { _sort_rules.push_back({ seq, numeric_limits<coord_t>::max() }); }
 			//_tabu_table.insert((_sort_rules[0].*tabu_key)());
 			// 1_面积递减
 			sort(_sort_rules[1].sequence.begin(), _sort_rules[1].sequence.end(), [this](size_t lhs, size_t rhs) {
@@ -165,6 +165,9 @@ namespace mbp {
 			// 3_随机排序
 			shuffle(_sort_rules[3].sequence.begin(), _sort_rules[3].sequence.end(), _gen);
 			//_tabu_table.insert((_sort_rules[3].*tabu_key)());
+			// 4_多边形难度递减
+			sort(_sort_rules[4].sequence.begin(), _sort_rules[4].sequence.end(), [this](size_t lhs, size_t rhs) {
+				return _src.at(lhs)->shape() > _src.at(rhs)->shape(); });
 
 			// 默认输入顺序
 			_polygons.assign(_sort_rules[0].sequence.begin(), _sort_rules[0].sequence.end());
