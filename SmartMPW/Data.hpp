@@ -79,6 +79,7 @@ struct Polygon {
 	const std::shared_ptr<const std::vector<Point<T>>> in_points; // 输入坐标序列
 	T area;
 	T max_length;
+	T min_length;
 	Point<T> lb_point; // 参考坐标（求解）
 	Rotation rotation; // 旋转角度（求解）
 	std::vector<Point<T>> out_points; // 输出坐标序列
@@ -87,6 +88,8 @@ struct Polygon {
 		id(id_), in_points(std::make_shared<const std::vector<Point<T>>>(points)),
 		lb_point(0, 0), rotation(Rotation::_0_),
 		max_length(max_element(segments.begin(), segments.end(),
+			[](const Segment<T> &lhs, const Segment<T> &rhs) { return lhs.len < rhs.len; })->len),
+		min_length(min_element(segments.begin(), segments.end(),
 			[](const Segment<T> &lhs, const Segment<T> &rhs) { return lhs.len < rhs.len; })->len) {}
 
 	virtual Shape shape() = 0;

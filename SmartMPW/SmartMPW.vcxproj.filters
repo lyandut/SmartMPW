@@ -16,8 +16,17 @@
     <Filter Include="Algorithm">
       <UniqueIdentifier>{fa9339ae-7012-4480-9a11-cf3faa25abb1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="资源文件\icisc">
+    <Filter Include="资源文件\iceec2020">
       <UniqueIdentifier>{7e9affc1-21ea-4d96-96ce-12993c4f4435}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="资源文件\randomCaseL">
+      <UniqueIdentifier>{f584160f-7f9f-42a9-aabb-90cc16cfc6e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="资源文件\randomCaseT">
+      <UniqueIdentifier>{217854d4-5a58-4367-9a14-9ab7d77814fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="资源文件\randomCaseU">
+      <UniqueIdentifier>{fbb9a0a7-92f5-4f36-a75e-3417bcedca92}</UniqueIdentifier>
     </Filter>
     <Filter Include="资源文件\mcnc">
       <UniqueIdentifier>{967289eb-3305-47a3-b6c0-9599f7acde4a}</UniqueIdentifier>
@@ -42,6 +51,9 @@
     <ClInclude Include="Utils.hpp">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="RandomCase.hpp">
+      <Filter>Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
@@ -57,37 +69,259 @@
       <Filter>资源文件\mcnc</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_1.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_2.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_3.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_4.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_5.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_6.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_7.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_8.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_9.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
     <Text Include="..\Deploy\Instance\polygon_area_etc_input_10.txt">
-      <Filter>资源文件\icisc</Filter>
+      <Filter>资源文件\iceec2020</Filter>
     </Text>
-    <Text Include="..\Deploy\Instance\polygon_area_etc_input_55.txt">
-      <Filter>资源文件\icisc</Filter>
+    <Text Include="..\Deploy\Instance\Ln200r0.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln200r20.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln200r40.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln200r60.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln200r80.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln400r0.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln400r20.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln400r40.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln400r60.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln400r80.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln600r0.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln600r20.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln600r40.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln600r60.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln600r80.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln800r0.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln800r20.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln800r40.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln800r60.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln800r80.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln1000r0.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln1000r20.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln1000r40.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln1000r60.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Ln1000r80.txt">
+      <Filter>资源文件\randomCaseL</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn200r0.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn200r20.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn200r40.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn200r60.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn200r80.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn400r0.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn400r20.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn400r40.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn400r60.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn400r80.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn600r0.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn600r20.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn600r40.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn600r60.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn600r80.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn800r0.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn800r20.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn800r40.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn800r60.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn800r80.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn1000r0.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn1000r20.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn1000r40.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn1000r60.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Tn1000r80.txt">
+      <Filter>资源文件\randomCaseT</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un200r0.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un200r20.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un200r40.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un200r60.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un200r80.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un400r0.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un400r20.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un400r40.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un400r60.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un400r80.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un600r0.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un600r20.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un600r40.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un600r60.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un600r80.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un800r0.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un800r20.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un800r40.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un800r60.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un800r80.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un1000r0.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un1000r20.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un1000r40.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un1000r60.txt">
+      <Filter>资源文件\randomCaseU</Filter>
+    </Text>
+    <Text Include="..\Deploy\Instance\Un1000r80.txt">
+      <Filter>资源文件\randomCaseU</Filter>
     </Text>
   </ItemGroup>
 </Project>

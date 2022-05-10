@@ -28,7 +28,7 @@ public:
 	string ins_html_path() const { return instance_dir() + _ins_name + ".html"; }
 	string sol_html_path() const { return solution_dir() + _ins_name + ".html"; }
 	string sol_html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
-	string log_path() const { return solution_dir() + "log.csv"; }	
+	string log_path() const { return solution_dir() + "log.csv"; }
 private:
 	static string instance_dir() { return "Instance/"; }
 	static string solution_dir() { return "Solution/"; }
@@ -56,6 +56,17 @@ public:
 
 	int get_polygon_num() const { return _polygon_num; }
 
+	int get_polygon_num(Shape shape) const {
+		switch (shape) {
+		case Shape::R: return _rect_num;
+		case Shape::L: return _lshape_num;
+		case Shape::T: return _tshape_num;
+		case Shape::C: return _concave_num;
+		default: return _polygon_num;
+		}
+		return _polygon_num;
+	}
+
 	const vector<polygon_ptr>& get_polygon_ptrs()  const { return _polygon_ptrs; }
 
 	// [todo] 预处理，合并部分L/T成矩形
@@ -69,7 +80,7 @@ private:
 			return;
 		}
 
-		_polygon_num = 0;
+		_polygon_num = _rect_num = _lshape_num = _tshape_num = _concave_num = 0;
 		_total_area = 0;
 		string line;
 		while (getline(ifs, line)) {
@@ -93,6 +104,7 @@ private:
 				_rects.emplace_back(_polygon_num++, in_points, in_segments);
 				_polygon_ptrs.emplace_back(make_shared<rect_t>(_rects.back()));
 				_total_area += _rects.back().area;
+				_rect_num++;
 				break;
 			}
 			case 6: {
@@ -101,6 +113,7 @@ private:
 				_lshapes.emplace_back(_polygon_num++, in_points, in_segments);
 				_polygon_ptrs.emplace_back(make_shared<lshape_t>(_lshapes.back()));
 				_total_area += _lshapes.back().area;
+				_lshape_num++;
 				break;
 			}
 			case 8: {
@@ -111,6 +124,7 @@ private:
 					_tshapes.emplace_back(_polygon_num++, in_points, in_segments);
 					_polygon_ptrs.emplace_back(make_shared<tshape_t>(_tshapes.back()));
 					_total_area += _tshapes.back().area;
+					_tshape_num++;
 					break;
 				}
 				case Shape::C: {
@@ -119,6 +133,7 @@ private:
 					_concaves.emplace_back(_polygon_num++, in_points, in_segments);
 					_polygon_ptrs.emplace_back(make_shared<concave_t>(_concaves.back()));
 					_total_area += _concaves.back().area;
+					_concave_num++;
 					break;
 				}
 				default: { assert(false); break; }
@@ -168,6 +183,10 @@ private:
 
 	coord_t _total_area;
 	int _polygon_num;
+	int _rect_num;
+	int _lshape_num;
+	int _tshape_num;
+	int _concave_num;
 };
 
 #endif // SMARTMPW_INSTANCE_HPP

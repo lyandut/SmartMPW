@@ -33,8 +33,8 @@ public:
 
 		_start = clock();
 
-		vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
-		//vector<coord_t> candidate_widths = cal_candidate_widths_on_sqrt();
+		//vector<coord_t> candidate_widths = cal_candidate_widths_on_interval();
+		vector<coord_t> candidate_widths = cal_candidate_widths_on_sqrt();
 		vector<CandidateWidth> cw_objs; cw_objs.reserve(candidate_widths.size());
 
 		// 分支初始化iter=1
@@ -97,7 +97,7 @@ public:
 		for (auto &dst_node : _dst) {
 			string polygon_str;
 			for_each(dst_node->out_points.begin(), dst_node->out_points.end(),
-				[&](point_t &point) { polygon_str += to_string(point.x*0.01) + "," + to_string(point.y*0.01) + " "; });
+				[&](point_t &point) { polygon_str += to_string(point.x) + "," + to_string(point.y) + " "; });
 			html_drawer.polygon(polygon_str);
 		}
 	}
@@ -119,16 +119,18 @@ public:
 		ofstream log_file(_env.log_path(), ios::app);
 		log_file.seekp(0, ios::end);
 		if (log_file.tellp() <= 0) {
-			log_file << "Instance,"
-				"InsArea,ObjArea,FillRatio,"
+			log_file << "Instance,InsArea,"
+				"ObjArea,FillRatio,"
 				"Width,Height,WHRatio,"
-				"Iteration,Duration,TotalDuration,RandomSeed" << endl;
+				"Iteration,FirstDuration,TotalDuration,"
+				"Alpha,Beta,RandomSeed" << endl;
 		}
-		log_file << _env.instance_name() << ","
-			<< _ins.get_total_area() << "," << _obj_area << "," << _fill_ratio << ","
+		log_file << _env.instance_name() << "," << _ins.get_total_area() << "," 
+			<< _obj_area << "," << _fill_ratio << ","
 			<< _width << "," << _height << "," << _wh_ratio << ","
 			<< _iteration << "," << _duration << ","
-			<< static_cast<double>(clock() - _start) / CLOCKS_PER_SEC << "," << _cfg.random_seed << endl;
+			<< static_cast<double>(clock() - _start) / CLOCKS_PER_SEC << "," 
+			<< _cfg.lb_scale << "," << _cfg.ub_scale << "," << _cfg.random_seed << endl;
 	}
 #endif // !SUBMIT
 
