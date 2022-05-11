@@ -36,7 +36,7 @@ void run_all_instances() {
 		//"ami49_lt_Xu_1",
 		//"ami49_lt_Xu_2"
 	};
-	for (auto& ins : ins_list) {
+	for (auto ins : ins_list) {
 		cout << "load instance " << ins << endl;
 		run_single_instance(ins);
 	}
@@ -45,7 +45,9 @@ void run_all_instances() {
 	for (int s = 1; s <= 3; ++s) {
 		for (int n = 200; n <= 1000; n += 200) {
 			for (int r = 0; r <= 80; r += 20) {
-				run_single_instance(mp[Shape(s)] + "n" + to_string(n) + "r" + to_string(r));
+				string ins = mp[Shape(s)] + "n" + to_string(n) + "r" + to_string(r);
+				cout << "load instance " << ins << endl;
+				run_single_instance(ins);
 			}
 		}
 	}
