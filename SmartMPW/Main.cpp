@@ -17,6 +17,7 @@ void run_single_instance(const string& ins_str) {
 	asa.draw_sol(env.sol_html_path());
 	asa.draw_sol(env.sol_html_path_with_time());
 	asa.record_log();
+	//asa.record_characteristic();
 #endif // !SUBMIT
 }
 

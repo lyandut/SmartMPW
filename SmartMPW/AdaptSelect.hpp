@@ -80,15 +80,15 @@ public:
 	}
 
 	void record_sol(const string &sol_path) const {
-		ofstream sol_file(sol_path);
+		ofstream ofs(sol_path);
 		for (auto &dst_node : _dst) {
-			sol_file << "In Polygon:" << endl;
-			for (auto &point : *dst_node->in_points) { sol_file << "(" << point.x << "," << point.y << ")"; }
+			ofs << "In Polygon:" << endl;
+			for (auto &point : *dst_node->in_points) { ofs << "(" << point.x << "," << point.y << ")"; }
 			dst_node->to_out_points();
-			sol_file << endl << "Out Polygon:" << endl;
+			ofs << endl << "Out Polygon:" << endl;
 			for_each(dst_node->out_points.begin(), dst_node->out_points.end(),
-				[&](point_t &point) { sol_file << "(" << point.x << "," << point.y << ")"; });
-			sol_file << endl;
+				[&](point_t &point) { ofs << "(" << point.x << "," << point.y << ")"; });
+			ofs << endl;
 		}
 	}
 
@@ -116,21 +116,30 @@ public:
 	}
 
 	void record_log() const {
-		ofstream log_file(_env.log_path(), ios::app);
-		log_file.seekp(0, ios::end);
-		if (log_file.tellp() <= 0) {
-			log_file << "Instance,InsArea,"
+		ofstream ofs(_env.log_path(), ios::app);
+		ofs.seekp(0, ios::end);
+		if (ofs.tellp() <= 0) {
+			ofs << "Instance,InsArea,"
 				"ObjArea,FillRatio,"
 				"Width,Height,WHRatio,"
 				"Iteration,FirstDuration,TotalDuration,"
 				"Alpha,Beta,RandomSeed" << endl;
 		}
-		log_file << _env.instance_name() << "," << _ins.get_total_area() << "," 
+		ofs << _env.instance_name() << "," << _ins.get_total_area() << "," 
 			<< _obj_area << "," << _fill_ratio << ","
 			<< _width << "," << _height << "," << _wh_ratio << ","
 			<< _iteration << "," << _duration << ","
 			<< static_cast<double>(clock() - _start) / CLOCKS_PER_SEC << "," 
 			<< _cfg.lb_scale << "," << _cfg.ub_scale << "," << _cfg.random_seed << endl;
+	}
+
+	void record_characteristic() const {
+		ofstream ofs(_env.characteristic_path(), ios::app);
+		ofs.seekp(0, ios::end);
+		if (ofs.tellp() <= 0) { ofs << "Inst.,#R,#L,#T,#U,Area" << endl; }
+		ofs << _env.instance_name() << "," << _ins.get_polygon_num(Shape::R) << ","
+			<< _ins.get_polygon_num(Shape::L) << "," << _ins.get_polygon_num(Shape::T) << ","
+			<< _ins.get_polygon_num(Shape::C) << "," << _ins.get_total_area() << endl;
 	}
 #endif // !SUBMIT
 

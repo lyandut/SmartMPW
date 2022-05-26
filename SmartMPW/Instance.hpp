@@ -29,6 +29,7 @@ public:
 	string sol_html_path() const { return solution_dir() + _ins_name + ".html"; }
 	string sol_html_path_with_time() const { return solution_dir() + _ins_name + "." + utils::Date::to_long_str() + ".html"; }
 	string log_path() const { return solution_dir() + "log.csv"; }
+	string characteristic_path() const { return instance_dir() + "characteristic.csv"; }
 private:
 	static string instance_dir() { return "Instance/"; }
 	static string solution_dir() { return "Solution/"; }
